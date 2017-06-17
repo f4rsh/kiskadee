@@ -1,9 +1,12 @@
+import tempfile
+import importlib
+from time import sleep
+
 import kiskadee.plugins
 import kiskadee.queue
 import requests
 import fedmsg
 import fedmsg.config
-from time import sleep
 
 
 class Plugin(kiskadee.plugins.Plugin):
@@ -23,7 +26,10 @@ class Plugin(kiskadee.plugins.Plugin):
             self._get_messages()
 
     def get_sources(self, source_data):
-        return {}
+        path = tempfile.mkdtemp()
+        backend_name = source_data.get('meta').get('backend').lower()
+        backend = self._load_backend(backend_name)
+        return backend.download_source(source_data, path)
 
     def _get_messages(self):
         """Get messages published on fedmsg"""
@@ -43,3 +49,7 @@ class Plugin(kiskadee.plugins.Plugin):
                     'homepage': message.get('msg').get('project').get('homepage')
                     }
                 }
+
+    def _load_backend(self, backend_name):
+        return importlib.import_module(''.join(['kiskadee.plugins.anitya_',
+            backend_name]))
