@@ -82,8 +82,8 @@ def analyze(package):
                     reports.append(str(firehose_report))
                     kiskadee.logger.debug('ANALYSIS: DONE running %s' % analyzer)
                 except:
-                    kiskadee.logger.debug('ERROR: Could not run
-                            analysis inside container')
+                    kiskadee.logger.debug('ERROR: Could not run'\
+                            'analysis inside container')
             # TODO: remove compressed/uncompressed files after the analysis
         return reports
     else:
