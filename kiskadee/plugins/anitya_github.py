@@ -15,3 +15,4 @@ def source_url(version):
     github_url = 'https://github.com/firecat53/urlscan/archive/'
     source_url = ''.join([github_url, version])
     return source_url
+

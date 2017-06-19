@@ -75,11 +75,15 @@ def analyze(package):
             analyzers = plugin.analyzers()
             for analyzer in analyzers:
                 kiskadee.logger.debug('ANALYSIS: running %s ...' % analyzer)
-                analysis = kiskadee.analyzers.run(analyzer, path)
-                firehose_report = kiskadee.converter.to_firehose(analysis,
+                try:
+                    analysis = kiskadee.analyzers.run(analyzer, path)
+                    firehose_report = kiskadee.converter.to_firehose(analysis,
                                                                  analyzer)
-                reports.append(str(firehose_report))
-                kiskadee.logger.debug('ANALYSIS: DONE running %s' % analyzer)
+                    reports.append(str(firehose_report))
+                    kiskadee.logger.debug('ANALYSIS: DONE running %s' % analyzer)
+                except:
+                    kiskadee.logger.debug('ERROR: Could not run
+                            analysis inside container')
             # TODO: remove compressed/uncompressed files after the analysis
         return reports
     else:

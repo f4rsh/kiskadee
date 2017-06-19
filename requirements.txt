@@ -7,3 +7,4 @@ chardet
 Sphinx
 fedmsg
 fedmsg[consumers]
+packaging 

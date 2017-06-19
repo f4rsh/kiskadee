@@ -1,20 +1,19 @@
 import tempfile
 import importlib
 from time import sleep
-
-import kiskadee.plugins
-import kiskadee.queue
+from packaging import version
 import requests
 import fedmsg
 import fedmsg.config
 
+import kiskadee.plugins
+import kiskadee.queue
+
 
 class Plugin(kiskadee.plugins.Plugin):
-    def __init__(self):
-        """Loads from /etc/fedmsg.d/endpoints.py the anitya configuration"""
-        super().__init__()
-        fedmsg.config.load_config()
 
+    def __init__(self):
+        super().__init__()
 
     def watch(self):
         """Start the monitoring process for Anitya reports.
@@ -22,8 +21,17 @@ class Plugin(kiskadee.plugins.Plugin):
         Each package monitored by the plugin will be
         queued using the package_enqueuer decorator.
         """
-        while True:
-            self._get_messages()
+
+        config = fedmsg.config.load_config([], None)
+        config["endpoints"] = { "anitya-public-relay": [
+                        "tcp://release-monitoring.org:9940",
+                        ],
+                    }
+        config['mute'] = True
+        config['timeout'] = 0
+
+        for name, endpoint, topic, msg in fedmsg.tail_messages(**config):
+            self._create_package_dict(msg)
 
     def get_sources(self, source_data):
         path = tempfile.mkdtemp()
@@ -31,12 +39,8 @@ class Plugin(kiskadee.plugins.Plugin):
         backend = self._load_backend(backend_name)
         return backend.download_source(source_data, path)
 
-    def _get_messages(self):
-        """Get messages published on fedmsg"""
-
-        for name, endpoint, topic, msg in fedmsg.tail_messages():
-            print(msg.get('msg').get('project'))
-            self._create_package_dict(msg)
+    def compare_versions(self, new, old):
+        return version.parse(new) > version.parse(old)
 
     @kiskadee.queue.package_enqueuer
     def _create_package_dict(self, message):
