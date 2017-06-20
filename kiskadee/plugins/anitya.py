@@ -9,11 +9,7 @@ import fedmsg.config
 import kiskadee.plugins
 import kiskadee.queue
 
-
 class Plugin(kiskadee.plugins.Plugin):
-
-    def __init__(self):
-        super().__init__()
 
     def watch(self):
         """Start the monitoring process for Anitya reports.
@@ -37,7 +33,10 @@ class Plugin(kiskadee.plugins.Plugin):
         path = tempfile.mkdtemp()
         backend_name = source_data.get('meta').get('backend').lower()
         backend = self._load_backend(backend_name)
-        return backend.download_source(source_data, path)
+        if backend:
+            return backend.download_source(source_data, path)
+        else:
+            return {}
 
     def compare_versions(self, new, old):
         return version.parse(new) > version.parse(old)
@@ -55,5 +54,10 @@ class Plugin(kiskadee.plugins.Plugin):
                 }
 
     def _load_backend(self, backend_name):
-        return importlib.import_module(''.join(['kiskadee.plugins.anitya_',
+        try:
+            return importlib.import_module(''.join(['kiskadee.plugins.anitya_',
             backend_name]))
+        except:
+            kiskadee.logger.info("Backend not "\
+                    "suported: {}".format(str(backend_name)))
+            return {}
