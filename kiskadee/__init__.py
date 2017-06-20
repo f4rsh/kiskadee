@@ -92,35 +92,16 @@ else:
     # log _read[0] loaded
     pass
 
-
 log_file = config['DEFAULT']['log_file']
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
-formatter = logging.Formatter('%(asctime)s - %(name)s - ' +
-                              '%(levelname)s - %(message)s')
+
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+
 if log_file != 'stdout':
-    _warning = logging.FileHandler(log_file, mode='w+')
-    _info = logging.FileHandler(log_file, mode='w+')
     _debug = logging.FileHandler(log_file, mode='w+')
-
-    _debug.setFormatter(formatter)
-    _warning.setFormatter(formatter)
-    _info.setFormatter(formatter)
-
 else:
     _debug = logging.StreamHandler(sys.stdout)
-    _warning = logging.StreamHandler(sys.stdout)
-    _info = logging.StreamHandler(sys.stdout)
 
-    _debug.setFormatter(formatter)
-    _warning.setFormatter(formatter)
-    _info.setFormatter(formatter)
-
-
-_debug.setLevel(logging.DEBUG)
-_warning.setLevel(logging.WARNING)
-_info.setLevel(logging.INFO)
-
+_debug.setFormatter(formatter)
+logger.setLevel(logging.DEBUG)
 logger.addHandler(_debug)
-logger.addHandler(_warning)
-logger.addHandler(_info)

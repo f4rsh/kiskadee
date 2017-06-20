@@ -3,17 +3,16 @@
 kiskadee monitors repositories checking for new package versions to be
 analyzed. This module provides such capabilities.
 """
-
 import threading
 from multiprocessing import Process
 import time
+
 import kiskadee.database
 import kiskadee.runner
 import kiskadee.queue
 from kiskadee.model import Package, Plugin, Version, Base
 
 RUNNING = True
-
 
 class Monitor:
     """Provide kiskadee monitoring objects."""
@@ -22,7 +21,6 @@ class Monitor:
         """Return a non initialized Monitor."""
         self.engine = None
         self.session = None
-        self.logger = kiskadee.logger
 
     def initialize(self):
         """Start all threads related to the monitoring process.
@@ -68,7 +66,7 @@ class Monitor:
         if not kiskadee.queue.packages_queue.empty():
             pkg = kiskadee.queue.dequeue_package()
             kiskadee.queue.package_done()
-            self.logger.info("Dequed Package: {}".format(str(pkg)))
+            kiskadee.logger.debug("Dequed Package: {}".format(str(pkg)))
             time.sleep(1)
             return pkg
         return {}
@@ -91,9 +89,9 @@ class Monitor:
                            has_analysis=False)
         _package.versions.append(_version)
         self.session.add(_package)
-        self.logger.info("Saving package in db: {}".format(str(pkg)))
+        kiskadee.logger.debug("Saving package in db: {}".format(str(pkg)))
         self.session.commit()
-        self.logger.info("Enqueue package {}_{} "
+        kiskadee.logger.debug("Enqueue package {}_{} "
                          " for analysis".format(pkg['name'], pkg['version']))
         kiskadee.queue.enqueue_analysis(pkg)
 
@@ -110,14 +108,14 @@ class Monitor:
                 _pkg.versions.append(_new_version)
                 self.session.add(_pkg)
                 self.session.commit()
-                self.logger.info("Enqueue package {}_{}"
+                kiskadee.logger.debug("Enqueue package {}_{}"
                                  "for analysis".format(pkg['name'],
                                                        pkg['version']))
                 kiskadee.queue.enqueue_analysis(pkg)
             else:
                 return {}
         except ValueError:
-            self.logger.info("Could not compare versions")
+            kiskadee.logger.debug("Could not compare versions")
 
     def _plugin_name(self, plugin):
         return plugin.__name__.split('.')[len(plugin.__name__.split('.')) - 1]
@@ -125,7 +123,7 @@ class Monitor:
     def _save_plugin(self, plugin):
         name = self._plugin_name(plugin)
         plugin = plugin.Plugin()
-        self.logger.info("Saving {} plugin in database".format(name))
+        kiskadee.logger.debug("Saving {} plugin in database".format(name))
         if not self.session.query(Plugin).filter(Plugin.name == name).first():
             _plugin = Plugin(name=name,
                              target=plugin.config['target'],

@@ -61,7 +61,7 @@ def analyze(package):
         return: list with firehose reports
     """
     plugin = package['plugin'].Plugin()
-    kiskadee.logger.info('ANALYSIS: Downloading {} '
+    kiskadee.logger.debug('ANALYSIS: Downloading {} '
                          'source...'.format(package['name']))
     compressed_source = plugin.get_sources(package)
     if compressed_source:

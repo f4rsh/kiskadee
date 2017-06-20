@@ -32,7 +32,7 @@ class Plugin(kiskadee.plugins.Plugin):
         Each package monitored by the plugin will be
         queued using the package_enqueuer decorator.
         """
-        self.logger.info("Starting Debian plugin")
+        kiskadee.logger.debug("Starting Debian plugin")
         while RUNNING:
             url = self._sources_gz_url()
             try:
@@ -42,7 +42,7 @@ class Plugin(kiskadee.plugins.Plugin):
                 sleep(float(self.config['schedule']) * 60)
                 shutil.rmtree(sources_gz_dir)
             except urllib.error.URLError:
-                self.logger.debug("Cannot reach debian mirror")
+                kiskadee.logger.debug("Cannot reach debian mirror")
 
     def get_sources(self, source_data):
         """Download packages from some debian mirror."""
@@ -53,7 +53,7 @@ class Plugin(kiskadee.plugins.Plugin):
                 subprocess.check_output(['dget', url])
                 return ''.join([path, '/', self._source_path(path)])
             except:
-                self.logger.debug('Cannot download {} source'.
+                kiskadee.logger.debug('Cannot download {} source'.
                                   format(source_data['name']))
                 return None
 
