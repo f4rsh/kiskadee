@@ -19,6 +19,7 @@ def runner():
     :func:`analyze` method, passing the dequeued package. After the analysis,
     updates the status of this package on the database.
     """
+    kiskadee.logger.debug("Starting runner component")
     database = kiskadee.database.Database()
     engine = database.engine
     session = database.session

@@ -46,7 +46,9 @@ setup(
     packages=find_packages(),
     include_package_data=False,
     entry_points={'console_scripts': [
-            'kiskadee = kiskadee.monitor:daemon']},
+            'kiskadee = kiskadee.monitor:daemon',],
+            'moksha.consumer': ( 
+                'anityaconsumer = kiskadee.plugins.anitya:AnityaConsumer')},
     install_requires=get_requirements(),
     test_suite='nose.collector',
     tests_require=[
