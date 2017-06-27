@@ -45,3 +45,33 @@ A simple example of a kiskadee plugin
             This method does not matter here, let's just pass
             """
             return 0
+
+List of kiskadee plugins
+----------------------------
+
+Inside tha package `plugins` you can check which plugins kiskadee have,
+and which targets are monitored with this plugins. This section is a brief
+overview of this plugins.
+
+    - *debian.py*: A plugin to monitor the Debian ftp repository. This plugin
+      will  every hour downloads the *Sources.gz* file of the repository and
+      loads it in memory. This file is a representation of all the packages
+      present in the repository. After kiskadee loads it in memory, all the
+      packages are compared with the database, and if a new package is
+      identified, it source code is downloaded, and a analysis is made.
+
+    - *anitya.py*: A plugin to monitor fedmsg events, published on the
+      Anitya project. The Anitya project monitor upstream releases and
+      broadcast them on fedmsg. The plugin will consume this events, and
+      trigger analysis when it's possible.
+
+
+    - *juliet.py*: Juliet is a static analysis test suite provided by
+      NIST's SAMATE team. It contains injected, known CWE's in specific
+      points and similar code snippets with the injected flaws fixed. This
+      plugin downloads the source code of this test suite, and run static
+      analyzers on it.
+
+    - *example.py*: A simple example of a kiskadee plugin. Can be used as
+      start point for new plugins.
+
