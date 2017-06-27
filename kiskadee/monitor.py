@@ -14,6 +14,7 @@ from kiskadee.model import Package, Plugin, Version, Base
 
 RUNNING = True
 
+
 class Monitor:
     """Provide kiskadee monitoring objects."""
 
@@ -91,8 +92,10 @@ class Monitor:
         self.session.add(_package)
         kiskadee.logger.debug("Saving package in db: {}".format(str(pkg)))
         self.session.commit()
-        kiskadee.logger.debug("Enqueue package {}_{} "
-                         " for analysis".format(pkg['name'], pkg['version']))
+        kiskadee.logger.debug(
+                "Enqueue package {}_{} "
+                " for analysis".format(pkg['name'], pkg['version'])
+        )
         kiskadee.queue.enqueue_analysis(pkg)
 
     def _update_pkg_version(self, pkg):
@@ -108,9 +111,10 @@ class Monitor:
                 _pkg.versions.append(_new_version)
                 self.session.add(_pkg)
                 self.session.commit()
-                kiskadee.logger.debug("Enqueue package {}_{}"
-                                 "for analysis".format(pkg['name'],
-                                                       pkg['version']))
+                kiskadee.logger.debug(
+                        "Enqueue package {}_{}"
+                        "for analysis".format(pkg['name'], pkg['version'])
+                )
                 kiskadee.queue.enqueue_analysis(pkg)
             else:
                 return {}

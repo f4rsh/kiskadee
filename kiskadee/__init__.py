@@ -53,11 +53,11 @@ def load_plugins():
     """
     plugins = []
     for plugin in kiskadee_plugins_list:
-        #TODO: I will think in a good architecture to anitya backends.
+        # TODO: I will think in a good architecture to anitya backends.
         if plugin.find('anitya_') == -1:
             if config[plugin + '_plugin'].getboolean('active'):
-                plugins.append(importlib.import_module('kiskadee.plugins.'
-                                                   + plugin))
+                plugins.append(importlib.import_module(
+                    'kiskadee.plugins.' + plugin))
     return plugins
 
 
@@ -95,7 +95,8 @@ else:
 log_file = config['DEFAULT']['log_file']
 logger = logging.getLogger(__name__)
 
-formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+formatter = logging.Formatter(
+        '%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
 if log_file != 'stdout':
     _debug = logging.FileHandler(log_file, mode='w+')

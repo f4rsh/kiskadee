@@ -8,3 +8,5 @@ Sphinx
 fedmsg
 packaging 
 pyyaml
+flake8
+pydocstyle

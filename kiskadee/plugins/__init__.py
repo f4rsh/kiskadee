@@ -7,7 +7,6 @@ Plugin class here defined.
 import abc
 import kiskadee
 import inspect
-import logging
 
 
 class Plugin():
