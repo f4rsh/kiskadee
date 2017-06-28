@@ -14,6 +14,27 @@ permissions so the container can access external files.
 
 kiskadee looks for its configuration file under `/etc/kiskadee.conf`.
 
+### Anitya Plugin
+If you intend to run the anitya plugin, you will have to install fedmsg-hub,
+in order to kiskadee be able to consume the fedmsg events.
+To install fedmsg-hub follow this steps inside the kiskadee root path:
+
+	sudo yum install fedmsg-hub
+	virtualenv -p /usr/bin/python3 .
+	source bin/activate
+	sudo cp util/anityaconsumer.py /etc/fedmsg.d/anityaconsumer.py
+	pip install -e .
+	PYTHONPATH=$(pwd) fedmsg-hub
+
+With this steps, fedmsg-hub will instanciate `AnityaConsumer` and publish
+the monitored events using ZeroMQ. When kiskadee starts it will consume
+the messages published by the consumer, and will run the analysis.
+
+### Debian Plugin
+If you intend to use the debian plugin, you will have to install the
+`devscripts` package, in order use the necessary debian tools to run the
+plugin.
+
 ## Development
 
 kiskadee development is hosted at [pagure](https://pagure.io/kiskadee). Feel
