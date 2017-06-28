@@ -112,15 +112,23 @@ class Backends():
         homepage = source_data.get('meta').get('homepage')
 
         if homepage.find("github") != -1:
-            with kiskadee.helpers.chdir(path):
-                url = ''.join([homepage, '/archive/', source_version])
-                in_file = urllib.request.urlopen(url)
-                data = in_file.read()
-                with open(source_version, 'wb') as info:
-                    info.write(data)
-            return ''.join([path, '/', source_version])
-        else:
-            return {}
+            try:
+                with kiskadee.helpers.chdir(path):
+                    url = ''.join([homepage, '/archive/', source_version])
+                    in_file = urllib.request.urlopen(url)
+                    data = in_file.read()
+                    with open(source_version, 'wb') as info:
+                        info.write(data)
+                return ''.join([path, '/', source_version])
+            except Exception as err:
+                kiskadee.logger.debug(
+                        "Cannot download {} "
+                        "source code".format(source_data["name"])
+                )
+                kiskadee.logger.debug(err)
+                return {}
+
+        return {}
 
 
 class AnityaConsumer(fedmsg.consumers.FedmsgConsumer):
