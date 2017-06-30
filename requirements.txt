@@ -7,6 +7,7 @@ python-debian
 chardet
 Sphinx
 fedmsg
+fedmsg[consumers]
 packaging 
 pyyaml
 flake8
