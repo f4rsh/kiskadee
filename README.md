@@ -19,12 +19,11 @@ If you intend to run the anitya plugin, you will have to install fedmsg-hub,
 in order to kiskadee be able to consume the fedmsg events.
 To install fedmsg-hub follow this steps inside the kiskadee root path:
 
-	sudo yum install fedmsg-hub
-	virtualenv -p /usr/bin/python3 .
-	source bin/activate
-	sudo cp util/anityaconsumer.py /etc/fedmsg.d/anityaconsumer.py
-	pip install -e .
-	PYTHONPATH=$(pwd) fedmsg-hub
+    sudo mkdir -p /etc/fedmsg.d/
+    sudo cp util/base.py util/endpoints.py  /etc/fedmsg.d/
+    sudo cp util/anityaconsumer.py /etc/fedmsg.d/
+    pip install -e .
+    PYTHONPATH=`pwd` fedmsg-hub
 
 With this steps, fedmsg-hub will instanciate `AnityaConsumer` and publish
 the monitored events using ZeroMQ. When kiskadee starts it will consume
