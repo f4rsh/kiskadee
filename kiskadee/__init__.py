@@ -53,11 +53,9 @@ def load_plugins():
     """
     plugins = []
     for plugin in kiskadee_plugins_list:
-        # TODO: I will think in a good architecture to anitya backends.
-        if plugin.find('anitya_') == -1:
-            if config[plugin + '_plugin'].getboolean('active'):
-                plugins.append(importlib.import_module(
-                    'kiskadee.plugins.' + plugin))
+        if config[plugin + '_plugin'].getboolean('active'):
+            plugins.append(importlib.import_module(
+                'kiskadee.plugins.' + plugin))
     return plugins
 
 

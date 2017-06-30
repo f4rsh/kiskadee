@@ -6,7 +6,6 @@ import yaml
 from packaging import version
 import fedmsg.consumers
 import time
-import urllib.request
 
 import kiskadee.helpers
 import kiskadee.plugins
@@ -80,22 +79,25 @@ class Plugin(kiskadee.plugins.Plugin):
             return False
 
     @kiskadee.queue.package_enqueuer
-    def _create_package_dict(self, msg_as_string):
-        msg_as_string = msg_as_string[msg_as_string.find(" ")+1::]
-        msg = yaml.load(msg_as_string)
-        _msg = msg.get('body').get('msg').get('project')
+    def _create_package_dict(self, fedmsg_event):
+        event = self._event_to_dict(fedmsg_event)
+        project = event.get('body').get('msg').get('project')
         source_dict = {}
-        if _msg:
+        if project:
             source_dict = {
-                    'name': _msg.get('name'),
-                    'version': _msg.get('version'),
+                    'name': project.get('name'),
+                    'version': project.get('version'),
                     'plugin': kiskadee.plugins.anitya,
                     'meta': {
-                        'backend': _msg.get('backend'),
-                        'homepage': _msg.get('homepage')
+                        'backend': project.get('backend'),
+                        'homepage': project.get('homepage')
                     }
             }
         return source_dict
+
+    def _event_to_dict(self, msg):
+        msg = msg[msg.find(" ")+1::]
+        return yaml.load(msg)
 
 
 class Backends():
@@ -110,25 +112,8 @@ class Backends():
         """Backend implementation to download github sources."""
         source_version = ''.join([source_data.get('version'), '.tar.gz'])
         homepage = source_data.get('meta').get('homepage')
-
-        if homepage.find("github") != -1:
-            try:
-                with kiskadee.helpers.chdir(path):
-                    url = ''.join([homepage, '/archive/', source_version])
-                    in_file = urllib.request.urlopen(url)
-                    data = in_file.read()
-                    with open(source_version, 'wb') as info:
-                        info.write(data)
-                return ''.join([path, '/', source_version])
-            except Exception as err:
-                kiskadee.logger.debug(
-                        "Cannot download {} "
-                        "source code".format(source_data["name"])
-                )
-                kiskadee.logger.debug(err)
-                return {}
-
-        return {}
+        url = ''.join([homepage, '/archive/', source_version])
+        return kiskadee.helpers.download(path, url, source_version)
 
 
 class AnityaConsumer(fedmsg.consumers.FedmsgConsumer):

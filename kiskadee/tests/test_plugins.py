@@ -130,14 +130,14 @@ class TestAnityaPlugin(TestCase):
         def zmq_server():
             context = zmq.Context()
             socket = context.socket(zmq.PUB)
-            socket.bind("tcp://*:5556")
+            socket.bind("tcp://*:7776")
             time.sleep(1)
             socket.send_string("%s" % (self.msg))
             time.sleep(1)
 
         def receive_msg_from_server():
             client_socket = self.anitya_plugin._connect_to_zmq(
-                    "5556", "anitya")
+                    "7776", "anitya")
             if client_socket:
                 response = client_socket.recv_string()
                 results[0] = response[response.find(" ")+1::]
