@@ -10,21 +10,18 @@ import kiskadee.helpers
 import kiskadee.converter
 
 running = True
-
+database = kiskadee.database
+engine = database.engine
+session = database.session
+kiskadee.model.Base.metadata.create_all(engine)
+kiskadee.model.Base.metadata.bind = engine
 
 def runner():
     """Run static analyzers.
-
     Continuously dequeue packages from `analyses_queue` and call the
     :func:`analyze` method, passing the dequeued package. After the analysis,
     updates the status of this package on the database.
     """
-    kiskadee.logger.debug("Starting runner component")
-    database = kiskadee.database.Database()
-    engine = database.engine
-    session = database.session
-    kiskadee.model.Base.metadata.create_all(engine)
-    kiskadee.model.Base.metadata.bind = engine
     while running:
         if not kiskadee.queue.is_empty():
             kiskadee.logger.debug('RUNNER: dequeuing...')
@@ -33,22 +30,7 @@ def runner():
                                   % (package['name'],
                                      package['version'],
                                      package['plugin'].__name__))
-            analysis_reports = analyze(package)
-            if analysis_reports:
-                kiskadee.logger.debug('RUNNER: Saving analysis %s' %
-                                      str(package))
-                all_analyses = '\n'.join(analysis_reports)
-                pkg = (session.query(kiskadee.model.Package).
-                       filter(kiskadee.model.Package.name == package['name']).
-                       first())
-                pkg.versions[-1].has_analysis = True
-                pkg.versions[-1].analysis = all_analyses
-                session.add(pkg)
-                session.commit()
-                kiskadee.logger.debug('RUNNER: DONE running analysis')
-            else:
-                kiskadee.logger.debug('RUNNER: Something went wrong')
-                kiskadee.logger.debug('RUNNER: could not generate analysis')
+            analyze(package)
 
 
 def analyze(package):
@@ -67,6 +49,9 @@ def analyze(package):
             'source...'.format(package['name'])
     )
     compressed_source = plugin.get_sources(package)
+    pkg = (session.query(kiskadee.model.Package).
+            filter(kiskadee.model.Package.name == package['name']).
+            first())
     if compressed_source:
         kiskadee.logger.debug('ANALYSIS: Downloaded!')
         kiskadee.logger.debug('ANALYSIS: Unpacking...')
@@ -80,18 +65,37 @@ def analyze(package):
                 kiskadee.logger.debug('ANALYSIS: running %s ...' % analyzer)
                 try:
                     analysis = kiskadee.analyzers.run(analyzer, path)
-                    firehose_report = kiskadee.converter.to_firehose(
-                            analysis, analyzer
-                    )
-                    reports.append(str(firehose_report))
+                    firehose_report = kiskadee.converter.to_firehose(analysis,
+                                                                 analyzer)
+                    analysed_version = pkg.versions[-1].id
                     kiskadee.logger.debug(
-                            'ANALYSIS: DONE running %s' % analyzer
+                        "Saving analysis of {} on {} version {}"
+                        .format(analyzer, pkg.name, pkg.versions[-1].number)
                     )
-                except:
+                    self._save_source_analysis(
+                            analysed_version, firehose_report, analyzer
+                    )
                     kiskadee.logger.debug(
-                            'ERROR: Could not run analysis inside container'
+                            'ANALYSIS: DONE {} analysis'.format(analyzer)
                     )
+                except Exception as err:
+                    kiskadee.logger.debug('RUNNER: could not generate analysis')
+                    kiskadee.logger.debug(err)
             # TODO: remove compressed/uncompressed files after the analysis
-        return reports
     else:
         kiskadee.logger.debug('RUNNER: invalid source dict')
+
+def _save_source_analysis(self, version_id, analysis, analyzer):
+    _analysis = kiskadee.model.Analysis()
+    try:
+        _analyzer = session.query(Analyzers).\
+            filter(Analyzer.name == analyzer).first()
+        _analysis.analyzer_id = _analyzer.id
+        _analysis.version_id = version_id
+        _analysis.raw = analysis
+        session.add(_analysis)
+    except Exception as err:
+        kiskadee.logger.debug(
+            "The required analyzer was not registered in kiskadee"
+        )
+        kiskadee.logger.debug(err)

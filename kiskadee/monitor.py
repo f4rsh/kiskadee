@@ -36,7 +36,7 @@ class Monitor:
             the analysis will never be performed. You can use thee decorator
             `@kiskadee.queue.package_enqueuer` to easiliy enqueue a package.
         """
-        database = kiskadee.database.Database()
+        database = kiskadee.database
         self.engine = database.engine
         self.session = database.session
         Base.metadata.create_all(self.engine)
@@ -86,8 +86,7 @@ class Monitor:
         _package = Package(name=pkg['name'],
                            plugin_id=_plugin.id)
         _version = Version(number=pkg['version'],
-                           package_id=_package.id,
-                           has_analysis=False)
+                           package_id=_package.id)
         _package.versions.append(_version)
         self.session.add(_package)
         kiskadee.logger.debug("Saving package in db: {}".format(str(pkg)))
@@ -106,8 +105,7 @@ class Monitor:
             if(pkg['plugin'].Plugin().
                compare_versions(pkg['version'], current_pkg_version) == 1):
                 _new_version = Version(number=pkg['version'],
-                                       package_id=_pkg.id,
-                                       has_analysis=False)
+                                       package_id=_pkg.id)
                 _pkg.versions.append(_new_version)
                 self.session.add(_pkg)
                 self.session.commit()
