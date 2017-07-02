@@ -28,6 +28,10 @@ import configparser
 import logging
 import sys
 
+from kiskadee.model import Analyzer, Base
+import kiskadee.model
+import kiskadee.database
+
 __version__ = '0.1.dev0'
 
 _my_path = os.path.dirname(os.path.realpath(__file__))
@@ -104,3 +108,24 @@ else:
 _debug.setFormatter(formatter)
 logger.setLevel(logging.DEBUG)
 logger.addHandler(_debug)
+logger.addHandler(_warning)
+logger.addHandler(_info)
+
+database = kiskadee.database.Database()
+engine = database.engine
+session = database.session
+Base.metadata.create_all(engine)
+Base.metadata.bind = engine
+
+def create_analyzers():
+    list_of_analyzers = dict(kiskadee.config._sections["analyzers"])
+    for name, version in list_of_analyzers.items():
+        if not (session.query(Analyzer).filter(Analyzer.name == name).
+                filter(Analyzer.version == version).first()):
+            new_analyzer = kiskadee.model.Analyzer()
+            new_analyzer.name = name
+            new_analyzer.version = version
+            session.add(new_analyzer)
+    session.commit()
+
+create_analyzers()

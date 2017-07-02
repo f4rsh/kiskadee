@@ -1,5 +1,7 @@
 """This module provides kiskadee database model."""
 
+import kiskadee.database
+import kiskadee.model
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import Column, Integer, UnicodeText, UniqueConstraint,\
                        Sequence, Unicode, ForeignKey, Boolean, orm
@@ -46,8 +48,28 @@ class Version(Base):
                 Sequence('versions_id_seq', optional=True), primary_key=True)
     number = Column(Unicode(100), nullable=False)
     package_id = Column(Integer, ForeignKey('packages.id'), nullable=False)
-    has_analysis = Column(Boolean)
-    analysis = Column(UnicodeText)
+    analysis = orm.relationship('Analysis', backref='versions')
     __table_args__ = (
             UniqueConstraint('number', 'package_id'),
             )
+
+class Analyzer(Base):
+    """Abstraction of a static analyzer."""
+
+    __tablename__ = 'analyzers'
+    id = Column(Integer,
+                Sequence('analyzers_id_seq', optional=True), primary_key=True)
+    name = Column(Unicode(255), nullable=False, unique=True)
+    version = Column(Unicode(255), nullable=True)
+    analysis = orm.relationship('Analysis', backref='analyzers')
+
+
+class Analysis(Base):
+    """Abstraction of a package analysis."""
+
+    __tablename__ = 'analysis'
+    id = Column(Integer,
+                Sequence('analysis_id_seq', optional=True), primary_key=True)
+    version_id = Column(Integer, ForeignKey('versions.id'), nullable=False)
+    analyzer_id = Column(Integer, ForeignKey('analyzers.id'), nullable=False)
+    raw = Column(UnicodeText)
