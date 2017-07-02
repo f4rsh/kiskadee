@@ -33,7 +33,7 @@ def to_firehose(bytes_input, analyzer):
     if (analyzer_module):
         with open(file_to_parse, 'r') as f:
             analysis_instance = analyzer_module.parse_file(f)
-            firehose_tree = analysis_instance.to_xml_bytes()
+            firehose_tree = str(analysis_instance.to_xml_bytes())
 
     shutil.rmtree(tempdir)
 

@@ -108,8 +108,6 @@ else:
 _debug.setFormatter(formatter)
 logger.setLevel(logging.DEBUG)
 logger.addHandler(_debug)
-logger.addHandler(_warning)
-logger.addHandler(_info)
 
 database = kiskadee.database.Database()
 engine = database.engine

@@ -13,8 +13,6 @@ running = True
 database = kiskadee.database
 engine = database.engine
 session = database.session
-kiskadee.model.Base.metadata.create_all(engine)
-kiskadee.model.Base.metadata.bind = engine
 
 def runner():
     """Run static analyzers.
@@ -31,6 +29,7 @@ def runner():
                                      package['version'],
                                      package['plugin'].__name__))
             analyze(package)
+
 
 
 def analyze(package):
@@ -69,12 +68,13 @@ def analyze(package):
                                                                  analyzer)
                     analysed_version = pkg.versions[-1].id
                     kiskadee.logger.debug(
-                        "Saving analysis of {} on {} version {}"
+                        "Saving analysis of {} on package {}-{}"
                         .format(analyzer, pkg.name, pkg.versions[-1].number)
                     )
-                    self._save_source_analysis(
+                    _save_source_analysis(
                             analysed_version, firehose_report, analyzer
                     )
+                    session.commit()
                     kiskadee.logger.debug(
                             'ANALYSIS: DONE {} analysis'.format(analyzer)
                     )
@@ -85,11 +85,11 @@ def analyze(package):
     else:
         kiskadee.logger.debug('RUNNER: invalid source dict')
 
-def _save_source_analysis(self, version_id, analysis, analyzer):
+def _save_source_analysis(version_id, analysis, analyzer):
     _analysis = kiskadee.model.Analysis()
     try:
-        _analyzer = session.query(Analyzers).\
-            filter(Analyzer.name == analyzer).first()
+        _analyzer = session.query(kiskadee.model.Analyzer).\
+            filter(kiskadee.model.Analyzer.name == analyzer).first()
         _analysis.analyzer_id = _analyzer.id
         _analysis.version_id = version_id
         _analysis.raw = analysis
