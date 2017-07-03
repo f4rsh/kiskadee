@@ -115,7 +115,7 @@ session = database.session
 Base.metadata.create_all(engine)
 Base.metadata.bind = engine
 
-def create_analyzers():
+def _create_analyzers():
     list_of_analyzers = dict(kiskadee.config._sections["analyzers"])
     for name, version in list_of_analyzers.items():
         if not (session.query(Analyzer).filter(Analyzer.name == name).
@@ -126,4 +126,4 @@ def create_analyzers():
             session.add(new_analyzer)
     session.commit()
 
-create_analyzers()
+_create_analyzers()

@@ -14,6 +14,7 @@ database = kiskadee.database
 engine = database.engine
 session = database.session
 
+
 def runner():
     """Run static analyzers.
     Continuously dequeue packages from `analyses_queue` and call the
@@ -29,15 +30,28 @@ def runner():
                                   % (source_to_analysis['name'],
                                      source_to_analysis['version'],
                                      source_to_analysis['plugin'].__name__))
-            source_name = source_to_analysis['name']
-            pkg = (
-                    session.query( kiskadee.model.Package)
-                    .filter(kiskadee.model.Package.name == source_name)
-                    .first()
-            )
-            analyze(pkg, source_to_analysis)
 
-def analyze(pkg, source_to_analysis):
+            _call_analyzers(source_to_analysis)
+
+
+def _call_analyzers(source_to_analysis):
+            plugin = source_to_analysis['plugin'].Plugin()
+            source_path = _path_to_uncompressed_source(
+                    source_to_analysis, plugin
+            )
+            analyzers = plugin.analyzers()
+            for analyzer in analyzers:
+                firehose_report = _analyze(
+                        source_to_analysis, analyzer, source_path
+                )
+                _save_source_analysis(
+                        source_to_analysis, firehose_report, analyzer
+                )
+
+            session.commit()
+
+
+def _analyze(source_to_analysis, analyzer, source_path):
     """Run each analyzer on a source_to_analysis.
 
     The source_to_analysis dict is in the queue. The keys are:
@@ -48,26 +62,15 @@ def analyze(pkg, source_to_analysis):
         return: list with firehose reports
     """
 
-    plugin = source_to_analysis['plugin'].Plugin()
-    source_path = _path_to_uncompressed_source(source_to_analysis, plugin)
-
     if source_path is None:
         return None
 
     with kiskadee.helpers.chdir(source_path):
-        analyzers = plugin.analyzers()
-        for analyzer in analyzers:
             kiskadee.logger.debug('ANALYSIS: running {} ...'.format(analyzer))
             try:
                 analysis = kiskadee.analyzers.run(analyzer, source_path)
                 firehose_report = kiskadee.converter.to_firehose(analysis,
                                                                  analyzer)
-                kiskadee.logger.debug(
-                    "Saving analysis of {} on package {}-{}"
-                    .format(analyzer, pkg.name, pkg.versions[-1].number)
-                )
-                _save_source_analysis(pkg, firehose_report, analyzer)
-                session.commit()
                 kiskadee.logger.debug(
                         'ANALYSIS: DONE {} analysis'.format(analyzer)
                 )
@@ -76,7 +79,23 @@ def analyze(pkg, source_to_analysis):
                 kiskadee.logger.debug(err)
         # TODO: remove compressed/uncompressed files after the analysis
 
-def _save_source_analysis(package, analysis, analyzer):
+
+def _save_source_analysis(source_to_analysis, analysis, analyzer):
+
+    if analysis is None:
+        return None
+
+    source_name = source_to_analysis['name']
+    source_version = source_to_analysis['version']
+
+    kiskadee.logger.debug(
+        "Saving analysis of {} on package {}-{}"
+        .format(analyzer, source_name, source_version)
+    )
+    package = (
+            session.query(kiskadee.model.Package)
+            .filter(kiskadee.model.Package.name == source_name).first()
+    )
     version_id = package.versions[-1].id
     _analysis = kiskadee.model.Analysis()
     try:
