@@ -1,8 +1,8 @@
 import os
 from unittest import TestCase
 
-from kiskadee.runner import analyze
-import kiskadee.plugins.debian
+from kiskadee.runner import _analyze, _path_to_uncompressed_source
+import kiskadee.plugins.example
 
 
 class TestAnalyzers(TestCase):
@@ -16,18 +16,14 @@ class TestAnalyzers(TestCase):
 
     def test_run_analyzer(self):
 
-        def mock_get_sources(arg1, arg2):
-            base_path = os.path.dirname(os.getcwd())
-            return ''.join([base_path,
-                            '/kiskadee/kiskadee/tests/test_source/'
-                            'test_source.tar.gz'])
+        source_to_analysis = {
+                'name': 'test',
+                'version': '1.0.0',
+                'plugin': kiskadee.plugins.example
+        }
 
-        kiskadee.plugins.debian.Plugin.get_sources = mock_get_sources
-        self.deb_pkg = {'name': 'test',
-                        'version': '1.0.0',
-                        'plugin': kiskadee.plugins.debian
-                        }
-
-        result = analyze(self.deb_pkg)
-        self.assertTrue(isinstance(result, list))
-        self.assertTrue(len(result) == 1)
+        source_path = _path_to_uncompressed_source(
+                source_to_analysis, kiskadee.plugins.example.Plugin()
+        )
+        firehose_report = _analyze(self.deb_pkg, "cppcheck", source_path)
+        self.assertIsNotNone(firehose_report)

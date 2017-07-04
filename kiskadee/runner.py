@@ -74,6 +74,7 @@ def _analyze(source_to_analysis, analyzer, source_path):
                 kiskadee.logger.debug(
                         'ANALYSIS: DONE {} analysis'.format(analyzer)
                 )
+                return firehose_report
             except Exception as err:
                 kiskadee.logger.debug('RUNNER: could not generate analysis')
                 kiskadee.logger.debug(err)
