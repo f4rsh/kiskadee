@@ -1,4 +1,3 @@
-import os
 from unittest import TestCase
 
 from kiskadee.runner import _analyze, _path_to_uncompressed_source

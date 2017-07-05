@@ -11,14 +11,22 @@ class TestModel(TestCase):
         Session = sessionmaker(bind=self.engine)
         self.session = Session()
         model.Base.metadata.create_all(self.engine)
+        self.analyzer = model.Analyzer(name="cppcheck", version="1.0.0")
         self.plugin = model.Plugin(name='kiskadee-plugin', target='university')
         self.package = model.Package(name='python-kiskadee')
-        self.version = model.Version(number='1.0-rc1', has_analysis=False)
+        self.version = model.Version(number='1.0-rc1')
         self.plugin.packages.append(self.package)
         self.package.versions.append(self.version)
         self.session.add(self.package)
         self.session.add(self.plugin)
         self.session.add(self.version)
+        self.session.add(self.analyzer)
+
+        self.analysis = model.Analysis(
+                analyzer_id=self.analyzer.id,
+                version_id=self.version.id,
+                raw=""
+                )
         self.session.commit()
 
     def tearDown(self):
@@ -44,7 +52,7 @@ class TestModel(TestCase):
         self.assertEqual(len(plugins), 2)
 
     def test_add_version_without_package(self):
-        version = model.Version(number='3.1', has_analysis=False)
+        version = model.Version(number='3.1')
         self.session.add(version)
         with self.assertRaises(exc.IntegrityError):
             self.session.commit()
@@ -64,8 +72,8 @@ class TestModel(TestCase):
             self.session.commit()
 
     def test_unique_version_for_package(self):
-        package_version_1 = model.Version(number='1.0', has_analysis=False)
-        package_version_2 = model.Version(number='1.0', has_analysis=False)
+        package_version_1 = model.Version(number='1.0')
+        package_version_2 = model.Version(number='1.0')
         self.package.versions.append(package_version_1)
         self.package.versions.append(package_version_2)
         with self.assertRaises(exc.IntegrityError):

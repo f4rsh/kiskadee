@@ -1,10 +1,8 @@
 """This module provides kiskadee database model."""
 
-import kiskadee.database
-import kiskadee.model
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import Column, Integer, UnicodeText, UniqueConstraint,\
-                       Sequence, Unicode, ForeignKey, Boolean, orm
+                       Sequence, Unicode, ForeignKey, orm
 
 Base = declarative_base()
 
@@ -52,6 +50,7 @@ class Version(Base):
     __table_args__ = (
             UniqueConstraint('number', 'package_id'),
             )
+
 
 class Analyzer(Base):
     """Abstraction of a static analyzer."""
