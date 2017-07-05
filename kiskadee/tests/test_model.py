@@ -1,7 +1,9 @@
 from unittest import TestCase
-from kiskadee import model
 from sqlalchemy import create_engine, exc
 from sqlalchemy.orm import sessionmaker
+
+from kiskadee import model
+from kiskadee.runner import _create_analyzers
 
 
 class TestModel(TestCase):
@@ -11,7 +13,7 @@ class TestModel(TestCase):
         Session = sessionmaker(bind=self.engine)
         self.session = Session()
         model.Base.metadata.create_all(self.engine)
-        self.analyzer = model.Analyzer(name="cppcheck", version="1.0.0")
+        _create_analyzers(self.session)
         self.plugin = model.Plugin(name='kiskadee-plugin', target='university')
         self.package = model.Package(name='python-kiskadee')
         self.version = model.Version(number='1.0-rc1')
@@ -20,10 +22,9 @@ class TestModel(TestCase):
         self.session.add(self.package)
         self.session.add(self.plugin)
         self.session.add(self.version)
-        self.session.add(self.analyzer)
 
         self.analysis = model.Analysis(
-                analyzer_id=self.analyzer.id,
+                analyzer_id=1,
                 version_id=self.version.id,
                 raw=""
                 )

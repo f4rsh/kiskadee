@@ -7,6 +7,7 @@ from kiskadee.queue import enqueue_package
 from kiskadee.model import Package, Plugin
 import kiskadee.queue
 import kiskadee.plugins.debian
+from kiskadee.runner import _create_analyzers
 
 
 class TestMonitor(TestCase):
@@ -17,6 +18,7 @@ class TestMonitor(TestCase):
         Session = sessionmaker(bind=self.monitor.engine)
         self.monitor.session = Session()
         model.Base.metadata.create_all(self.monitor.engine)
+        _create_analyzers(self.monitor.session)
         self.pkg1 = {'name': 'curl',
                      'version': '7.52.1-5',
                      'plugin': kiskadee.plugins.debian,

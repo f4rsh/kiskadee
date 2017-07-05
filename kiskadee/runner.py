@@ -8,6 +8,7 @@ import kiskadee.model
 import kiskadee.database
 import kiskadee.helpers
 import kiskadee.converter
+from kiskadee.model import Analyzer
 
 running = True
 database = kiskadee.database
@@ -23,6 +24,7 @@ def runner():
     updates the status of this package on the database.
     """
     kiskadee.logger.debug('Starting runner component')
+    _create_analyzers(session)
     while running:
         if not kiskadee.queue.is_empty():
             kiskadee.logger.debug('RUNNER: dequeuing...')
@@ -129,3 +131,15 @@ def _path_to_uncompressed_source(package, plugin):
     else:
         kiskadee.logger.debug('RUNNER: invalid compressed source')
         return None
+
+
+def _create_analyzers(_session):
+    list_of_analyzers = dict(kiskadee.config._sections["analyzers"])
+    for name, version in list_of_analyzers.items():
+        if not (_session.query(Analyzer).filter(Analyzer.name == name).
+                filter(Analyzer.version == version).first()):
+            new_analyzer = kiskadee.model.Analyzer()
+            new_analyzer.name = name
+            new_analyzer.version = version
+            _session.add(new_analyzer)
+    _session.commit()
