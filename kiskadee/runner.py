@@ -11,9 +11,6 @@ import kiskadee.converter
 from kiskadee.model import Analyzer
 
 running = True
-database = kiskadee.database
-engine = database.engine
-session = database.session
 
 
 def runner():
@@ -24,6 +21,7 @@ def runner():
     updates the status of this package on the database.
     """
     kiskadee.logger.debug('Starting runner component')
+    session = kiskadee.database.Database().session
     _create_analyzers(session)
     while running:
         if not kiskadee.queue.is_empty():
@@ -34,10 +32,10 @@ def runner():
                                      source_to_analysis['version'],
                                      source_to_analysis['plugin'].__name__))
 
-            _call_analyzers(source_to_analysis)
+            _call_analyzers(source_to_analysis, session)
 
 
-def _call_analyzers(source_to_analysis):
+def _call_analyzers(source_to_analysis, session):
             plugin = source_to_analysis['plugin'].Plugin()
             source_path = _path_to_uncompressed_source(
                     source_to_analysis, plugin
@@ -48,7 +46,7 @@ def _call_analyzers(source_to_analysis):
                         source_to_analysis, analyzer, source_path
                 )
                 _save_source_analysis(
-                        source_to_analysis, firehose_report, analyzer
+                        source_to_analysis, firehose_report, analyzer, session
                 )
 
             session.commit()
@@ -83,7 +81,7 @@ def _analyze(source_to_analysis, analyzer, source_path):
         # TODO: remove compressed/uncompressed files after the analysis
 
 
-def _save_source_analysis(source_to_analysis, analysis, analyzer):
+def _save_source_analysis(source_to_analysis, analysis, analyzer, session):
 
     if analysis is None:
         return None

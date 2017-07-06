@@ -28,10 +28,6 @@ import configparser
 import logging
 import sys
 
-from kiskadee.model import Base
-import kiskadee.model
-import kiskadee.database
-
 __version__ = '0.1.dev0'
 
 _my_path = os.path.dirname(os.path.realpath(__file__))
@@ -108,9 +104,3 @@ else:
 _debug.setFormatter(formatter)
 logger.setLevel(logging.DEBUG)
 logger.addHandler(_debug)
-
-database = kiskadee.database.Database()
-engine = database.engine
-session = database.session
-Base.metadata.create_all(engine)
-Base.metadata.bind = engine

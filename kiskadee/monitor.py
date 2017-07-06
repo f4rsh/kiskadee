@@ -10,7 +10,7 @@ import time
 import kiskadee.database
 import kiskadee.runner
 import kiskadee.queue
-from kiskadee.model import Package, Plugin, Version, Base
+from kiskadee.model import Package, Plugin, Version
 
 RUNNING = True
 
@@ -18,10 +18,9 @@ RUNNING = True
 class Monitor:
     """Provide kiskadee monitoring objects."""
 
-    def __init__(self):
+    def __init__(self, _session):
         """Return a non initialized Monitor."""
-        self.engine = None
-        self.session = None
+        self.session = _session
 
     def initialize(self):
         """Start all threads related to the monitoring process.
@@ -36,11 +35,6 @@ class Monitor:
             the analysis will never be performed. You can use thee decorator
             `@kiskadee.queue.package_enqueuer` to easiliy enqueue a package.
         """
-        database = kiskadee.database
-        self.engine = database.engine
-        self.session = database.session
-        Base.metadata.create_all(self.engine)
-        Base.metadata.bind = self.engine
         _start(self.monitor)
         plugins = kiskadee.load_plugins()
         for plugin in plugins:
@@ -148,9 +142,9 @@ def _start(module, joinable=False, timeout=None):
 def daemon():
     """Entry point to the monitor module."""
     # TODO: improve with start/stop system
-    monitor = Monitor()
+    session = kiskadee.database.Database().session
+    monitor = Monitor(session)
     p = Process(target=monitor.initialize())
     p.daemon = True
     p.start()
     p.join()
-    # cleanup goes here

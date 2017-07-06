@@ -13,11 +13,11 @@ from kiskadee.runner import _create_analyzers
 class TestMonitor(TestCase):
 
     def setUp(self):
-        self.monitor = Monitor()
-        self.monitor.engine = create_engine('sqlite:///:memory:')
-        Session = sessionmaker(bind=self.monitor.engine)
-        self.monitor.session = Session()
-        model.Base.metadata.create_all(self.monitor.engine)
+        self.engine = create_engine('sqlite:///:memory:')
+        Session = sessionmaker(bind=self.engine)
+        session = Session()
+        self.monitor = Monitor(session)
+        model.Base.metadata.create_all(self.engine)
         _create_analyzers(self.monitor.session)
         self.pkg1 = {'name': 'curl',
                      'version': '7.52.1-5',
@@ -39,7 +39,7 @@ class TestMonitor(TestCase):
 
     def tearDown(self):
         # model.metadata.drop_all(self.engine)
-        model.Base.metadata.drop_all(self.monitor.engine)
+        model.Base.metadata.drop_all(self.engine)
 
     def test_dequeue_package(self):
         enqueue_package(self.pkg1)
