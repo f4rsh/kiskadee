@@ -10,7 +10,7 @@ def run(analyzer, sources):
     `sources` is the absolute path for the uncompressed package. Returns
     a analysis results.
     """
-    volume = {sources: {'bind': '/src', 'mode': 'ro'}}
+    volume = {sources: {'bind': '/src', 'mode': 'Z'}}
     client = docker.from_env(version='auto')
     return client.containers.run(analyzer, '/src', volumes=volume,
                                  stdout=True, stderr=True, tty=True)
