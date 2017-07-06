@@ -79,3 +79,28 @@ class TestModel(TestCase):
         self.package.versions.append(package_version_2)
         with self.assertRaises(exc.IntegrityError):
             self.session.commit()
+
+    def test_compose_kiskadee_source(self):
+        _analyzer = self.session.query(model.Analyzer)\
+                    .filter(model.Analyzer.name == "cppcheck").first()
+        package = model.Package(
+                name='bla',
+                plugin_id=self.plugin.id
+                )
+        package_version = model.Version(
+                number='1.0.1',
+                package_id=package.id
+                )
+
+        package_analysis = model.Analysis(
+                raw="<>",
+                analyzer_id=_analyzer.id,
+                version_id=package_version.id
+                )
+
+        self.plugin.packages.append(package)
+        package.versions.append(package_version)
+        package_version.analysis.append(package_analysis)
+        self.session.commit()
+
+        self.assertEqual(package.versions[0].analysis[0].raw, "<>")
