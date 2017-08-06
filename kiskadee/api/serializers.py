@@ -20,3 +20,12 @@ class PackageSchema(Schema):
         print('MAKING OBJECT FROM', data)
         return Package(**data)
 
+class AnalysisSchema(Schema):
+    id = fields.Int()
+    version_id = fields.Int()
+    analyzer_id = fields.Int()
+    raw = fields.Str()
+
+    def make_object(self, data):
+        print('MAKING OBJECT FROM', data)
+        return Analysis(**data)
