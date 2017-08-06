@@ -8,10 +8,12 @@ chardet
 Sphinx
 fedmsg
 fedmsg[consumers]
-packaging 
+packaging
 pyyaml
 flake8
 pydocstyle
 coverage
 nose
 flask
+Flask-Restless
+marshmallow
