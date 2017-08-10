@@ -10,7 +10,7 @@ pipeline {
     }
     stage('build-docker-images') {
       steps {
-        sh '(cd util/dockerfiles/cppcheck &&  docker build . -t cppcheck)'
+        sh '(cd util/dockerfiles/cppcheck && docker build . -t cppcheck)'
         sh '(cd util/dockerfiles/flawfinder && docker build . -t flawfinder)'
       }
     }
