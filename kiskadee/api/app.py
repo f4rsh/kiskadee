@@ -1,6 +1,7 @@
 import json
 from flask import Flask, jsonify
 from flask import request
+from flask_cors import CORS, cross_origin
 
 from kiskadee.database import Database
 from kiskadee.model import Package, Fetcher, Version, Analysis
@@ -9,7 +10,7 @@ from kiskadee.api.serializers import PackageSchema, FetcherSchema,\
 
 kiskadee = Flask(__name__)
 db_session = Database().session
-
+CORS(kiskadee)
 
 @kiskadee.route('/fetchers')
 def index():
@@ -27,6 +28,7 @@ def packages():
         result = package_schema.dump(packages)
         return jsonify({'packages': result.data})
 
+
 @kiskadee.route('/analysis/<pkg_name>/<version>/')
 def package_analysis(pkg_name, version):
     if request.method == 'GET':
@@ -42,4 +44,4 @@ def package_analysis(pkg_name, version):
         return jsonify({'analysis': result.data})
 
 if __name__ == '__main__':
-    kiskadee.run(debug=True)
+    kiskadee.run('0.0.0.0')
