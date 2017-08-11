@@ -14,7 +14,7 @@ pipeline {
     stage('Build') {
       steps {
         sh 'sudo -H -u ${USER} virtualenv -p /usr/bin/python3 .'
-	sh 'sudo -H -u ${USER} source bin/activate && sudo -H -u ${USER}  pip install -e .'
+	sh 'source bin/activate && sudo -H -u ${USER} pip install -e .'
       }
     }
     stage('build-docker-images') {
