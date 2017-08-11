@@ -1,10 +1,6 @@
 pipeline {
   agent any
 
-  environment {
-  	USER = "jenkins"
-  }
-
   stages {
     stage('change-repo-owner') {
       steps {
@@ -13,14 +9,14 @@ pipeline {
     }
     stage('Build') {
       steps {
-        sh 'sudo -H -u ${USER} virtualenv -p /usr/bin/python3 .'
-	sh  "sudo -H -u jenkins sh -c 'source bin/activate && pip install -e .'"
+        sh 'virtualenv -p /usr/bin/python3 .'
+	sh  'source bin/activate && pip install -e .'
       }
     }
     stage('build-docker-images') {
       steps {
-        sh '(sudo -H -u ${USER} cd util/dockerfiles/cppcheck && sudo -H -u ${USER} docker build . -t cppcheck)'
-        sh '(sudo -H -u ${USER} cd util/dockerfiles/flawfinder && sudo -H -u ${USER} docker build . -t flawfinder)'
+        sh '(cd util/dockerfiles/cppcheck &&  docker build . -t cppcheck)'
+        sh '(cd util/dockerfiles/flawfinder && docker build . -t flawfinder)'
       }
     }
     stage('Test') {
