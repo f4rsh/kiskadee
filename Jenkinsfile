@@ -1,17 +1,21 @@
 pipeline {
   agent any
 
+  environment {
+  	USER = "jenkins"
+  }
+
   stages {
     stage('Build') {
       steps {
-        sh 'virtualenv -p /usr/bin/python3 .'
-	sh 'source bin/activate && pip install -e .'
+        sh 'sudo -H -u ${USER} virtualenv -p /usr/bin/python3 .'
+	sh 'sudo -H -u ${USER} source bin/activate && sudo -H -u ${USER}  pip install -e .'
       }
     }
     stage('build-docker-images') {
       steps {
-        sh '(cd util/dockerfiles/cppcheck && docker build . -t cppcheck)'
-        sh '(cd util/dockerfiles/flawfinder && docker build . -t flawfinder)'
+        sh '(sudo -H -u ${USER} cd util/dockerfiles/cppcheck && sudo -H -u ${USER} docker build . -t cppcheck)'
+        sh '(sudo -H -u ${USER} cd util/dockerfiles/flawfinder && sudo -H -u ${USER} docker build . -t flawfinder)'
       }
     }
     stage('Test') {
