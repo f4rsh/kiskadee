@@ -2,15 +2,10 @@ pipeline {
   agent any
 
   stages {
-    stage('change-repo-owner') {
-      steps {
-        sh 'chown -R ${USER}.${USER} .'
-      }
-    }
     stage('Build') {
       steps {
         sh 'virtualenv -p /usr/bin/python3 .'
-	sh  'source bin/activate && pip install -e .'
+	sh 'source bin/activate && pip install -e .'
       }
     }
     stage('build-docker-images') {
