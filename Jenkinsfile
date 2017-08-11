@@ -6,6 +6,11 @@ pipeline {
   }
 
   stages {
+    stage('change-repo-owner') {
+      steps {
+        sh 'chown -R ${USER}.${USER} .'
+      }
+    }
     stage('Build') {
       steps {
         sh 'sudo -H -u ${USER} virtualenv -p /usr/bin/python3 .'
