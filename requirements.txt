@@ -18,3 +18,5 @@ flask
 Flask-Restless
 marshmallow
 flask-cors
+coverage
+nose
