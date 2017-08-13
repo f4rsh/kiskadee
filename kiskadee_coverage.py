@@ -6,7 +6,8 @@ sources = [
         'kiskadee.queue',
         'kiskadee.runner',
         'kiskadee.model',
-        'kiskadee.util'
+        'kiskadee.util',
+        'kiskadee.api.app'
     ]
 
 cov = Coverage(source=sources, omit="lib/*")
