@@ -7,6 +7,7 @@ from importlib import import_module
 import shutil
 import tempfile
 import os
+from firehose.model import Analysis, to_json
 
 
 def to_firehose(bytes_input, analyzer):
@@ -22,26 +23,31 @@ def to_firehose(bytes_input, analyzer):
     with open(file_to_parse, 'w') as f:
         f.write(bytes_input.decode('UTF-8'))
 
-    analyzer_module = import_analyzer_module(analyzer)
+    analyzer_module = import_firehose_parser(analyzer)
 
-    firehose_tree = None
+    analysis_as_json = None
+    firehose_result = None
     if (analyzer_module):
-        with open(file_to_parse, 'r') as f:
+        with open(file_to_parse, 'r+') as f:
             analysis_instance = analyzer_module.parse_file(f)
-            firehose_tree = str(analysis_instance.to_xml_bytes())
+            firehose_result = analysis_instance.to_xml_bytes().decode("utf-8")
+            f.seek(0)
+            f.truncate()
+            f.write(firehose_result)
+        with open(file_to_parse, 'r+') as f:
+            analysis_as_json = to_json(Analysis.from_xml(f))
 
     shutil.rmtree(tempdir)
+    return analysis_as_json
 
-    return firehose_tree
 
-
-def import_analyzer_module(analyzer):
+def import_firehose_parser(parser):
     """Import a firehose parser.
 
-    analyzer: The name of the parser that will be imported
+    parser: The name of the parser that will be imported
     :returns: Some firehose parser
     """
     try:
-        return import_module("firehose.parsers.%s" % (analyzer))
+        return import_module("firehose.parsers.%s" % (parser))
     except ImportError:
-        print("ERROR: Firehose parser %s not found" % analyzer)
+        print("ERROR: Firehose parser %s not found" % parser)
