@@ -16,7 +16,8 @@ pipeline {
     }
     stage('Test') {
       steps {
-        sh "source bin/activate && python kiskadee_coverage.py"
+        sh "chmod u+x run_tests_and_coverage.sh"
+        sh "source bin/activate && ./run_tests_and_coverage.sh"
       }
 
     post {
@@ -26,7 +27,7 @@ pipeline {
               allowMissing: false,
               alwaysLinkToLastBuild: false,
               keepAll: true,
-              reportDir: 'covhtml',
+              reportDir: 'htmlcov',
               reportFiles: 'index.html',
               reportName: 'coverage report'
             ]

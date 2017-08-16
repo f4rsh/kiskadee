@@ -2,6 +2,7 @@ from setuptools import setup, find_packages
 import re
 import os
 
+
 # Thanks to Pagure and SQLALchemy:
 # https://pagure.io/pagure/blob/master/f/setup.py
 # https://github.com/zzzeek/sqlalchemy/blob/master/setup.py
@@ -20,7 +21,6 @@ def get_requirements(requirements_file='requirements.txt'):
                 for line in f.readlines()
                 if not line.startswith('#')
                 ]
-
 
 setup(
     name='kiskadee',
@@ -46,8 +46,9 @@ setup(
     packages=find_packages(),
     include_package_data=False,
     entry_points={'console_scripts': [
-            'kiskadee = kiskadee.monitor:daemon',],
-            'moksha.consumer': ( 
+            'kiskadee = kiskadee.monitor:daemon',
+            'kiskadee_api = kiskadee.api.app:main',],
+            'moksha.consumer': (
                 'anityaconsumer = kiskadee.fetchers.anitya:AnityaConsumer')},
     install_requires=get_requirements(),
     test_suite='nose.collector',
