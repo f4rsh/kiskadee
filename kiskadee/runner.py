@@ -151,7 +151,7 @@ class Runner:
                     )
                 return uncompressed_source_path
             except Exception as err:
-                kiskadee.logger.debug('something went wrong')
+                kiskadee.logger.debug('Something went wrong')
                 kiskadee.logger.debug(err)
                 return None
         else:
