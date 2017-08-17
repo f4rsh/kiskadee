@@ -7,6 +7,8 @@ from importlib import import_module
 import shutil
 import tempfile
 import os
+import json
+
 from firehose.model import Analysis, to_json
 
 
@@ -38,7 +40,7 @@ def to_firehose(bytes_input, analyzer):
             analysis_as_json = to_json(Analysis.from_xml(f))
 
     shutil.rmtree(tempdir)
-    return analysis_as_json
+    return json.dumps(analysis_as_json)
 
 
 def import_firehose_parser(parser):
