@@ -188,7 +188,6 @@ the messages published by the consumer, and will run the analysis.
 
 The events that comes to the anitya fetcher are published by Anitya, on this
 [page](https://apps.fedoraproject.org/datagrepper/raw?category=anitya.)
-
 For more info about the Anitya service, read kiskadee documentation.
 
 

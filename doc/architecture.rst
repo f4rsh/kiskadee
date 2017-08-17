@@ -25,3 +25,5 @@ and this was a scope decision made by the kiskadee community.
         :align: center
 
 ..
+
+*Figure One: Kiskadee architecture.*
