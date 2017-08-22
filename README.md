@@ -209,11 +209,18 @@ To install fedmsg-hub follow this steps inside the kiskadee root path:
 >>>>>>> 3bc1617... Review README.md
 
 
+### Running API
+
+To run the kiskadee api just execute the command:
+
+	kiskadee_api
+
 ## Tests and coverage
 
 To check kiskadee tests and coverage just run:
 
-	python kiskadee_coverage.py
+	chmod u+x run_tests_and_coverage.sh
+	./run_tests_and_coverage.sh
 
 <<<<<<< HEAD
 To check kiskadee coverage open the file *covhtml/index.html*.
