@@ -6,6 +6,7 @@ into a Firehose database.
 ## Setup
 
 ### Dependencies
+<<<<<<< HEAD
 
 The name of the dependencies are compatible
 with the Fedora distribution. If you use another operational system,
@@ -35,6 +36,32 @@ for our python dependencies.
     virtualenv -p /usr/bin/python3 .
     source bin/activate
 
+=======
+
+Install some package dependencies. The name of the dependencies are compatible
+with the Fedora distribution. If you use another operational system,
+you will have to find the compatible name for the dependencies.
+The `redhat-rpm-config`
+package, is a specific Fedora dependency. If you not use Fedora (or a
+Red Hat distribution), maybe you will not have to install it.
+
+     - openssl-devel
+     - python3-devel
+     - gcc
+     - redhat-rpm-config python-pip
+
+### Virtual Environment
+
+Create a virtualenv to kiskadee. `dnf` is a package manager for the Fedora
+distribution, if you not use Fedora, use your package manage to install the
+virtualenv and pip packages. The virtualenv package will create a isolate
+environment for our python dependencies.
+
+    sudo pip install virtualenv
+    virtualenv -p /usr/bin/python3 .
+    source bin/activate
+
+>>>>>>> 3bc1617... Review README.md
 Install the python dependencies using pip
 
     pip install -e .
@@ -47,6 +74,7 @@ To run the static analyzers, you must have
 If you have configured the Docker engineer properly,
 run the *docker_build.sh* script. It will build the images for you.
 
+<<<<<<< HEAD
 	chmod u+x docker_build.sh
 	./docker_build.sh
 
@@ -55,6 +83,15 @@ Now we will create the kiskadee database. You will need to install the
 postgresql packages for your system. If you use Fedora, follow the next
 steps, if not, you will have to find out how install postgresql on your
 system.
+=======
+chmod u+x docker\_build.sh
+
+./docker\_build.sh
+
+### Database
+Now we will create the kiskadee database. You will need to install the
+postgresql packages for your system.
+>>>>>>> 3bc1617... Review README.md
 
 	sudo dnf install postgresql-server postgresql-contrib
 	sudo systemctl enable postgresql
@@ -63,8 +100,15 @@ system.
 
 To install on Ubuntu use this [link](https://www.digitalocean.com/community/tutorials/how-to-install-and-use-postgresql-on-ubuntu-16-04).
 
+<<<<<<< HEAD
 With postgresql installed, you will need to create the kiskadee role and
 database.
+=======
+With postgresql installed, you will need to create the kiskadee role. This
+role will be used to log in on the database:
+
+Now create the database:
+>>>>>>> 3bc1617... Review README.md
 
     sudo su - postgres
     createdb kiskadee
@@ -72,6 +116,7 @@ database.
     # choose a password
     psql -U postgres -c "grant all privileges on database kiskadee to kiskadee"
     # go back to your user (ctrl+d)
+<<<<<<< HEAD
     echo "localhost:5432:kiskadee:kiskadee:<your_password>" > ~/.pgpass
     chmod 600 ~/.pgpass
 
@@ -86,6 +131,13 @@ Test the database connection:
 If you was not able to log in on the database, you will need to edit
 the *pg_hba.conf* and change some rules defined by the postgresql package.
 On Linux systems this file normally stays at the
+=======
+    echo "localhost:5432:kiskadee:kiskadee:<password>" > ~/.pgpass
+    chmod 600 ~/.pgpass
+
+You will need to edit the *pg_hba.conf* to permits the kiskadee user to login
+on the database. On Linux systems this file normally stays at the
+>>>>>>> 3bc1617... Review README.md
 `/var/lib/pgsql/data/`. Open this file and change:
 
 	# "local" is for Unix domain socket connections only
@@ -116,21 +168,45 @@ Test the database connection:
 If you was able to get into the psql shell, the database is properly
 configured. Leave the shell with ctrl+d.
 
+<<<<<<< HEAD
 ### Running our first analysis
 
 Kiskadee reads environment variables from  the `util/kiskadee.conf` file.
 If everything goes well till now, open the *kiskadee.conf* file, and set as
+=======
+### Running
+
+Kiskadee read environment variables from  the `util/kiskadee.conf` file.
+If everything goes well till now, open the kiskadee.conf file, and set as
+>>>>>>> 3bc1617... Review README.md
 active (`active = yes`) only the *example_fetcher*, the other fetchers will
 stay as `active = no`.
 
 Now run kiskadee by typing `kiskadee` on
 the terminal. If the Docker images was properly build, and the Docker client
 was properly configured on your machine, kiskadee will be able to analysis a
+<<<<<<< HEAD
 example source code. This code is in the *kiskadee/tests/test_source/* directory.
 
 Kiskadee will decompress the example source, and run the analyzers defined on
 the *kiskadee.conf* file. You can use any postgresql client to access the
 database that you have created,  and check the analysis maded by kiskadee.
+=======
+example source code. This code is in the kiskadee/tests/test\_source/ directory.
+
+## Fetchers
+
+### Debian Fetcher
+If you intend to use the debian fetcher, you will have to install the
+`devscripts` package, in order use the necessary Debian tools to run the
+fetcher.
+
+
+### Anitya Fetcher
+If you intend to run the anitya fetcher, you will have to install fedmsg-hub,
+in order to kiskadee be able to consume the fedmsg events.
+To install fedmsg-hub follow this steps inside the kiskadee root path:
+>>>>>>> 3bc1617... Review README.md
 
 
 ## Tests and coverage
@@ -139,8 +215,11 @@ To check kiskadee tests and coverage just run:
 
 	python kiskadee_coverage.py
 
+<<<<<<< HEAD
 To check kiskadee coverage open the file *covhtml/index.html*.
 
+=======
+>>>>>>> 3bc1617... Review README.md
 ## Repositories
 
 Kiskadee daemon and API development are hosted at [pagure](https://pagure.io/kiskadee).
