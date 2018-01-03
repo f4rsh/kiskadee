@@ -26,18 +26,6 @@ use Fedora (or a Red Hat distribution), you may not need to install it.
 
   # dnf install gcc openssl-devel python3-devel python3-pip redhat-rpm-config
 
-Python dependencies
-+++++++++++++++++++
-
-To handle python dependencies, we recommend installing a virtual environment as shown in the
-subsections below. Regardless of how you handle your python pypi dependencies, just run
-
-.. code-block:: bash
-
-  $ pip install -r requirements.txt
-
-to install all kiskadee python related dependencies.
-
 Creating a python virtual environment with virtualenv
 #####################################################
 
@@ -77,6 +65,17 @@ Using virtualenv
 **You may need to change the version of the binary file for virtualenv-3.6 or
 whatever minor python version you use in your system**
 
+Python dependencies
++++++++++++++++++++
+
+To handle python dependencies, we recommend installing a virtual environment as shown on the
+previous subsections. Regardless of how you handle your python pypi dependencies, just run
+
+.. code-block:: bash
+
+  $ pip install -r requirements.txt
+
+to install all kiskadee python related dependencies.
 Docker Images
 -----------------------
 

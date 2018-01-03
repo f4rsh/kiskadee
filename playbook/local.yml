@@ -1,0 +1,9 @@
+---
+# TODO: fix a static IP on Vagrantfile
+- hosts: kiskadee-core
+  remote_user: root
+  roles:
+    - common
+    - docker
+    - database
+    - git
