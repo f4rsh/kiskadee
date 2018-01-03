@@ -1,23 +1,18 @@
-- name: Instal virtualenvwrapper package
+- name: Install kiskadee
+  command: pip3 install -e .
+  args:
+    chdir: /home/vagrant/kiskadee
+
+- name: Install fedmsg consumers
   pip:
-    name: virtualenvwrapper
-    executable: pip3
+     executable: pip3
+     name: "fedmsg[consumers]"
 
-# TODO: do this only once
-- name: source virtualenvwrapper
-  shell: echo source /usr/bin/virtualenvwrapper.sh >> /home/vagrant/.bashrc
+- name: make analyzers
+  make:
+    chdir: /home/vagrant/kiskadee
+    target: analyzers
 
-# TODO: do this only once
-- name: Export workon env
-  shell: echo export WORKON_HOME=/home/vagrant/Envs >> /home/vagrant/.bashrc
-
-  # TODO: do this only once
-- name: Export python version
-  shell: echo export VIRTUALENVWRAPPER_PYTHON="/usr/bin/python3" >> /home/vagrant/.bashrc
-
-- name: Change virtualenv path permitions
-  file:
-    path: /home/vagrant/Envs
-    owner: vagrant
-    state: directory
-    mode: 0755
+- name: Turn off selinux
+  command: setenforce 0
+  ignore_errors: yes
