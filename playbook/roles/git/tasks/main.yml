@@ -3,6 +3,13 @@
   args:
     chdir: /home/vagrant/kiskadee
 
+# Setuptools not installs test dependencies declared on setup.py, he just
+# download it as a .egg packages (.egg packages can be installed with easy_install)
+- name: Install kiskadee test dependencies
+  command: pip3 install -r test_requirements.txt
+  args:
+    chdir: /home/vagrant/kiskadee
+
 - name: Install fedmsg consumers
   pip:
      executable: pip3
