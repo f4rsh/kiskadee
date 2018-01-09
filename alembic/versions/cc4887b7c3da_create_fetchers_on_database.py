@@ -23,7 +23,7 @@ def upgrade():
     fetchers_table = table('fetchers',
             column('id', Integer),
             column('name', String),
-            column('target', String),
+            column('source', String),
             column('description', String)
             )
 
@@ -35,7 +35,7 @@ def upgrade():
                 [
                     {
                         'id': idx, 'name': _fetcher.name,
-                        'target': _fetcher.config['target'],
+                        'source': _fetcher.config['source'],
                         'description': _fetcher.config['description']
                         }
                     ]

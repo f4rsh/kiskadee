@@ -30,7 +30,7 @@ def upgrade():
             primary_key=True
         ),
         sa.Column('name', sa.Unicode(255), nullable=False, unique=True),
-        sa.Column('target', sa.Unicode(255), nullable=True),
+        sa.Column('source', sa.Unicode(255), nullable=True),
         sa.Column('description', sa.UnicodeText)
     )
 
