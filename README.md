@@ -25,6 +25,11 @@ issues or pull requests on these mirrors**.
 kiskadee have a CI environment hosted at this
 [url](http://143.107.45.126:30130/blue/organizations/jenkins/LSS-USP%2Fkiskadee/activity).
 
+## Ranking experiments
+
+Data and information on ranking experiments for kiskadee's ranking module are
+available [here](https://www.ime.usp.br/~athoscr/files/ranking_data.tgz).
+
 ## Communication
 
 Join us on IRC: #kiskadee @ freenode
