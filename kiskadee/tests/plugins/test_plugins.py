@@ -70,7 +70,7 @@ class DebianFetcherTestCase(unittest.TestCase):
         self.debian_fetcher._queue_sources_gz_pkgs(temp_dir)
         shutil.rmtree(temp_dir)
 
-        some_pkg = kiskadee.queue.Queues.dequeue_project()
+        some_pkg = kiskadee.queue.packages_queue.get()
         self.assertTrue(isinstance(some_pkg, dict))
         self.assertIn('name', some_pkg)
         self.assertIn('version', some_pkg)
@@ -190,8 +190,8 @@ class TestAnityaFetcher(unittest.TestCase):
 
     def test_create_package_dict(self):
 
-        self.anitya_fetcher.project_to_enqueue(self.msg)
-        _dict = kiskadee.queue.Queues().dequeue_project()
+        self.anitya_fetcher._create_package_dict(self.msg)
+        _dict = kiskadee.queue.packages_queue.get()
         self.assertEqual(_dict['name'], 'urlscan')
         self.assertEqual(_dict['version'], '0.8.5')
         self.assertEqual(_dict['meta']['backend'], 'GitHub')
@@ -199,7 +199,7 @@ class TestAnityaFetcher(unittest.TestCase):
                 _dict['meta']['homepage'],
                 'https://github.com/firecat53/urlscan'
         )
-        self.assertEqual(_dict['fetcher'], 'kiskadee.fetchers.anitya')
+        self.assertEqual(_dict['fetcher'].name, 'anitya')
 
 
 if __name__ == '__main__':
