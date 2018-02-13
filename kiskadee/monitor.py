@@ -8,6 +8,7 @@ from multiprocessing import Process
 import time
 import os
 import json
+import importlib
 
 import kiskadee.database
 from kiskadee.report import CppcheckReport, FlawfinderReport
@@ -22,7 +23,6 @@ REPORTERS = {
     'flawfinder': FlawfinderReport
 }
 
-
 class Monitor:
     """Provide kiskadee monitoring objects."""
 
@@ -31,7 +31,7 @@ class Monitor:
         self.session = _session
         self.kiskadee_queue = None
 
-    def monitor(self, kiskadee_queue):
+    def monitor(self, queues):
         """Dequeue packages and check if they need to be analyzed.
 
         The packages are dequeued from the `package_queue`. When a package
@@ -42,46 +42,23 @@ class Monitor:
         kiskadee.logger.debug('kiskadee PID: {}'.format(os.getppid()))
         kiskadee.logger.debug('Starting monitor subprocess')
         kiskadee.logger.debug('monitor PID: {}'.format(os.getpid()))
-        fetchers = kiskadee.load_fetchers()
-        for fetcher in fetchers:
-            self._save_fetcher(fetcher.Fetcher())
+
+        for fetcher in kiskadee.load_fetchers():
             _start_fetcher(fetcher.Fetcher().watch)
 
         while RUNNING:
-            self.kiskadee_queue = kiskadee_queue
-            pkg = self.dequeue_package()
+            self.kiskadee_queue = queues
+            pkg = self.kiskadee_queue.dequeue_project()
 
             if pkg:
                 self._send_to_runner(pkg)
             time.sleep(2)
-            package_to_save = self.dequeue_result()
-            self._save_analyzed_pkg(package_to_save)
-
-    def dequeue_package(self):
-        """Dequeue packages from packages_queue."""
-        if not kiskadee.queue.packages_queue.empty():
-            pkg = kiskadee.queue.packages_queue.get()
-            kiskadee.logger.debug(
-                    "MONITOR: Dequed Package: {}_{}"
-                    .format(pkg["name"], pkg["version"])
-                )
-            return pkg
-        return {}
-
-    def dequeue_result(self):
-        """Dequeue analyzed packages from result_queue."""
-        if not self.kiskadee_queue.results_empty():
-            pkg = self.kiskadee_queue.dequeue_result()
-            kiskadee.logger.debug(
-                    "MONITOR: Dequed result for package : {}-{}"
-                    .format(pkg["name"], pkg["version"])
-                )
-            return pkg
-        return {}
+            analyzed_project = self.kiskadee_queue.dequeue_result()
+            self._save_analyzed_project(analyzed_project)
 
     def _send_to_runner(self, pkg):
-        _name = pkg['fetcher'].name
-        _fetcher = self._query(Fetcher).filter(Fetcher.name == _name).first()
+        _name = pkg['fetcher'].split('.')[-1]
+        _fetcher = self._query(Fetcher).filter_by(name = _name).first()
         _package = (
                 self._query(Package)
                 .filter(Package.name == pkg['name']).first()
@@ -98,26 +75,25 @@ class Monitor:
             else:
                 new_version = pkg['version']
                 analysed_version = _package.versions[-1].number
-                fetcher = pkg['fetcher']
+                fetcher = importlib.import_module(pkg['fetcher']).Fetcher()
                 if (fetcher.compare_versions(new_version, analysed_version)):
                     self.kiskadee_queue.enqueue_analysis(pkg)
 
-    def _save_analyzed_pkg(self, pkg):
-        if not pkg:
+    # Move this to model.py
+    def _save_analyzed_project(self, data):
+        if not data:
             return {}
-        _package = (
-                self._query(Package)
-                .filter(Package.name == pkg['name']).first()
-            )
-        if not _package:
-            _package = self._save_pkg(pkg)
-        if _package:
-            _package = self._update_pkg(_package, pkg)
+        project = self._query(Package).filter_by(name = data['name']).first()
+        if not project:
+            project = self._save_project(data)
+        if project:
+            project = self._update_project(project, data)
 
-        for analyzer, result in pkg['results'].items():
-            self._save_analysis(pkg, analyzer, result, _package.versions[-1])
+        for analyzer, result in data['results'].items():
+            self._save_analysis(data, analyzer, result, project.versions[-1])
 
-    def _update_pkg(self, package, pkg):
+    # Move this to model.py
+    def _update_project(self, package, pkg):
 
         if(package.versions[-1].number == pkg['version']):
             return package
@@ -138,7 +114,8 @@ class Monitor:
             kiskadee.logger.debug("MONITOR: Could not compare versions")
             return None
 
-    def _save_pkg(self, pkg):
+    # Move this to model.py
+    def _save_project(self, pkg):
         homepage = None
         if ('meta' in pkg) and ('homepage' in pkg['meta']):
             homepage = pkg['meta']['homepage']
@@ -156,6 +133,7 @@ class Monitor:
         self.session.commit()
         return _package
 
+    # Move this to model.py
     def _save_reports(self, analysis, pkg, analyzer_name):
         try:
             results = analysis['results']
@@ -186,11 +164,12 @@ class Monitor:
             kiskadee.logger.debug(err)
         return
 
+    # Move this to model.py
     def _save_analysis(self, pkg, analyzer, result, version):
         _analysis = kiskadee.model.Analysis()
         try:
             _analyzer = self._query(kiskadee.model.Analyzer).\
-                    filter(kiskadee.model.Analyzer.name == analyzer).first()
+                    filter_by(name = analyzer).first()
             _analysis.analyzer_id = _analyzer.id
             _analysis.version_id = version.id
             _analysis.raw = json.loads(result)
@@ -214,6 +193,7 @@ class Monitor:
             kiskadee.logger.debug(err)
             return None
 
+    # Move this to model.py
     def _save_fetcher(self, fetcher):
         name = fetcher.name
         kiskadee.logger.debug(
@@ -244,17 +224,17 @@ def _start_fetcher(module, joinable=False, timeout=None):
 def daemon():
     """Entry point to the monitor module."""
     # TODO: improve with start/stop system
-    _kiskadee_queue = kiskadee.queue.KiskadeeQueue()
+    queues = kiskadee.queue.Queues()
     session = kiskadee.database.Database().session
     monitor = Monitor(session)
     runner = Runner()
     monitor_process = Process(
             target=monitor.monitor,
-            args=(_kiskadee_queue,)
+            args=(queues,)
         )
     runner_process = Process(
             target=runner.runner,
-            args=(_kiskadee_queue,)
+            args=(queues,)
         )
     monitor_process.start()
     runner_process.start()

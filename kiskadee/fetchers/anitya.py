@@ -17,8 +17,9 @@ class Fetcher(kiskadee.fetchers.Fetcher):
     def watch(self):
         """Start the monitoring process for Anitya reports.
 
-        Each package monitored by the fetcher will be
-        queued using the package_enqueuer decorator.
+        Each project monitored by the fetcher will be
+        queued by calling the watch parent method,
+        passing the project data as argument.
 
         The fetcher will use zmq as messaging protocol to receive
         the fedmsg-hub events. kiskadee and fedmsg-hub runs in different
@@ -35,7 +36,7 @@ class Fetcher(kiskadee.fetchers.Fetcher):
         if socket:
             while True:
                 msg = socket.recv_string()
-                self._create_package_dict(msg)
+                project = self.project_to_enqueue(msg)
 
     def get_sources(self, source_data):
         """Download packages from some Anitya Backend."""
@@ -76,23 +77,23 @@ class Fetcher(kiskadee.fetchers.Fetcher):
             kiskadee.logger.debug(err)
             return False
 
-    @kiskadee.queue.package_enqueuer
-    def _create_package_dict(self, fedmsg_event):
+    def project_to_enqueue(self, fedmsg_event):
         event = self._event_to_dict(fedmsg_event)
         if event:
             project = event.get('body').get('msg').get('project')
             source_dict = {}
             if project:
-                source_dict = {
+                kiskadee_project = {
                         'name': project.get('name'),
                         'version': project.get('version'),
-                        'fetcher': kiskadee.fetchers.anitya.Fetcher(),
+                        'fetcher': __name__,
                         'meta': {
                             'backend': project.get('backend'),
                             'homepage': project.get('homepage')
                         }
                 }
-            return source_dict
+                super().watch(**kiskadee_project)
+            
 
     def _event_to_dict(self, msg):
         msg = msg[msg.find(" ")+1::]

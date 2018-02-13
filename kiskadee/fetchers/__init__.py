@@ -10,6 +10,7 @@ import inspect
 import kiskadee
 import urllib.request
 
+import kiskadee.queue
 
 class Fetcher(abc.ABC):
     """Abstract Fetcher class."""
@@ -37,15 +38,23 @@ class Fetcher(abc.ABC):
         """
         raise NotImplementedError('get_sources must be defined by fetcher')
 
-    @abc.abstractmethod
-    def watch(self):
+    def watch(self, **kwargs):
         """Continuously monitor some target repository.
-
         This method will be called as a thread, and will run concurrently with
-        the main kiskadee thread.  This method must enqueue packages using the
-        `@kiskadee.queue.package_enqueuer` decorator.
+        the main kiskadee thread. The monitoring process must be done by
+        classes that heritage from this one. This method is only responsible
+        to enqueue new monitored projects, so must be called by it childrens.
         """
-        raise NotImplementedError('watch must be defined by fetcher')
+        project = kwargs
+        if not project:
+            raise NotImplementedError('fetcher must call parent watch method ')
+
+        kiskadee.queue.Queues().enqueue_project(project)
+        fetcher = project['fetcher']
+        kiskadee.logger.debug(
+                "{} fetcher: sending package {}_{} for monitor"
+                .format(fetcher, project['name'], project['version'])
+            )
 
     @abc.abstractmethod
     def compare_versions(self, new, old):

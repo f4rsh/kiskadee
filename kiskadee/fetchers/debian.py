@@ -21,8 +21,9 @@ class Fetcher(kiskadee.fetchers.Fetcher):
     def watch(self):
         """Start the monitoring process for Debian Repositories.
 
-        Each package monitored by the fetcher will be
-        queued using the package_enqueuer decorator.
+        Each project monitored by the fetcher will be
+        queued by calling the watch parent method,
+        passing the project data as argument.
         """
         kiskadee.logger.debug("Starting Debian fetcher")
         while RUNNING:
@@ -73,13 +74,13 @@ class Fetcher(kiskadee.fetchers.Fetcher):
         sources = os.path.join(path, 'Sources')
         with open(sources) as sources_file:
             for src in Sources.iter_paragraphs(sources_file):
-                self._create_package_dict(src)
+                project = self.project_to_enqueue(src)
+                super().watch(**project)
 
-    @kiskadee.queue.package_enqueuer
-    def _create_package_dict(self, src):
+    def project_to_enqueue(self, src):
         return {'name': src["Package"],
                 'version': self._parse_version(src["Version"]),
-                'fetcher': kiskadee.fetchers.debian.Fetcher(),
+                'fetcher': __name__,
                 'meta': {'directory': src['Directory']}
                 }
 

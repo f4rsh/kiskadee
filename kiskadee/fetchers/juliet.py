@@ -24,17 +24,16 @@ class Fetcher(kiskadee.fetchers.Fetcher):
             juliet_filename
             )
 
-    @kiskadee.queue.package_enqueuer
     def watch(self):
         """SAMATE does not provide a proper API to inspect new Juliet versions.
 
         It should not matter, since Juliet does not receive updates frequently.
         """
         juliet = {}
-        juliet['fetcher'] = kiskadee.fetchers.juliet.Fetcher()
+        juliet['fetcher'] = __name__
         juliet['version'] = '1.2'
         juliet['name'] = 'juliet'
-        return juliet
+        super().watch(**juliet)
 
     def compare_versions(self, new, old):
         """Juliet has only one version.

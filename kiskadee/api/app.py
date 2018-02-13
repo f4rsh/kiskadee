@@ -44,9 +44,10 @@ def packages():
 def package_analysis_overview(pkg_name, version):
     """Get the a analysis list of some package version."""
     db_session = kiskadee_db_session()
+
+    #TODO: This can be a simple inner join between package, version and analysis
     package_id = (
-            db_session.query(Package)
-            .filter(Package.name == pkg_name).first().id
+            db_session.query(Package).filter_by(name = pkg_name).id
         )
     version_id = (
             db_session.query(Version)
@@ -61,6 +62,8 @@ def package_analysis_overview(pkg_name, version):
             .filter(Analysis.version_id == version_id)
             .all()
         )
+    kiskadee.logger.debug("haaaaaaa")
+    kiskadee.logger.debug(analysis)
     analysis_schema = AnalysisSchema(many=True, exclude=['raw', 'report'])
     data, errors = analysis_schema.dump(analysis)
     return jsonify(data)

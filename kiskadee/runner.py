@@ -3,8 +3,8 @@
 import shutil
 import tempfile
 import os
+import importlib
 
-import kiskadee.queue
 import kiskadee.analyzers
 import kiskadee.model
 import kiskadee.database
@@ -18,9 +18,9 @@ class Runner:
 
     def __init__(self):
         """Return a non initialized Runner."""
-        self.kiskadee_queue = None
+        self.queues = None
 
-    def runner(self, kiskadee_queue):
+    def runner(self, queues):
         """Run static analyzers.
 
         Continuously dequeue packages from `analyses_queue` and call the
@@ -31,15 +31,16 @@ class Runner:
         kiskadee.logger.debug('runner PID: {}'.format(os.getpid()))
         session = kiskadee.database.Database().session
         kiskadee.model.create_analyzers(session)
-        self.kiskadee_queue = kiskadee_queue
+        self.queues = queues
         while RUNNING:
-            kiskadee.logger.debug('RUNNER: dequeuing...')
-            source_to_analysis = self.kiskadee_queue.dequeue_analysis()
+            kiskadee.logger.debug('RUNNER: Waiting to dequeue'\
+                                  ' project to analysis...')
+            source_to_analysis = self.queues.dequeue_analysis()
             kiskadee.logger.debug(
-                    'RUNNER: dequeued {}-{} from {}'
+                    'RUNNER: deqeued {}-{} from {}'
                     .format(source_to_analysis['name'],
                             source_to_analysis['version'],
-                            source_to_analysis['fetcher'].name)
+                            source_to_analysis['fetcher'])
                 )
             self.call_analyzers(source_to_analysis)
 
@@ -50,7 +51,7 @@ class Runner:
         the function :func:`analyze`, passing the source dict, the analyzer
         to run the analysis, and the path to a compressed source.
         """
-        fetcher = source_to_analysis['fetcher']
+        fetcher = importlib.import_module(source_to_analysis['fetcher']).Fetcher()
         source_path = self._path_to_uncompressed_source(
                 source_to_analysis, fetcher
         )
@@ -70,7 +71,7 @@ class Runner:
                     .format(source_to_analysis["name"],
                             source_to_analysis["version"])
                 )
-            self.kiskadee_queue.enqueue_result(source_to_analysis)
+            self.queues.enqueue_result(source_to_analysis)
         shutil.rmtree(source_path)
 
     def analyze(self, analyzer, source_path):

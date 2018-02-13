@@ -12,7 +12,6 @@ class Database:
         """Return a Database object with SQLAlchemy session and engine."""
         self.engine = self._create_engine(db)
         self.session = self._create_session(self.engine)
-        Base.metadata.create_all(self.engine)
         Base.metadata.bind = self.engine
 
     def _create_engine(self, db):

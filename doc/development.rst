@@ -269,13 +269,25 @@ more info about the Anitya service, read the rest of kiskadee documentation.
 Tests and coverage
 --------------------
 
-To check kiskadee tests and coverage just run:
+To check kiskadee tests and coverage:
 
 .. code-block:: bash
 
   $ make check
 
 To check kiskadee coverage open the file *covhtml/index.html*.
+
+To run only unit tests:
+
+.. code-block:: bash
+
+  $ python3 -m unittest kiskadee/tests/units/*.py
+
+To run api tests:
+
+.. code-block:: bash
+
+  $ python3 -m unittest kiskadee/tests/api/*.py
 
 building docs
 --------------------
