@@ -1,10 +1,8 @@
 import json
 import unittest
-from sqlalchemy.orm import sessionmaker
 from unittest.mock import MagicMock
 
 import kiskadee
-from kiskadee.runner import Runner
 from kiskadee.monitor import Monitor
 import kiskadee.api.app
 import kiskadee.fetchers.example

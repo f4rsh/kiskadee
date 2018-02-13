@@ -53,31 +53,8 @@ class Monitor:
             if pkg:
                 self._send_to_runner(pkg)
             time.sleep(2)
-            analyzed_project = self.queues.dequeue_result()
+            analyzed_project = self.kiskadee_queue.dequeue_result()
             self._save_analyzed_project(analyzed_project)
-
-    def dequeue_package(self):
-        """Dequeue packages from packages_queue."""
-        if not kiskadee.queue.packages_queue.empty():
-            pkg = kiskadee.queue.packages_queue.get()
-            kiskadee.logger.debug(
-                    "MONITOR: Dequed Package: {}_{}"
-                    .format(pkg["name"], pkg["version"])
-                )
-            return pkg
-        return {}
-
-    # Use directly dequeue_result from kiskadee.queue
-    #def dequeue_result(self):
-    #    """Dequeue analyzed packages from result_queue."""
-    #    if not self.kiskadee_queue.results_empty():
-    #        pkg = self.kiskadee_queue.dequeue_result()
-    #        kiskadee.logger.debug(
-    #                "MONITOR: Dequed result for package : {}-{}"
-    #                .format(pkg["name"], pkg["version"])
-    #            )
-    #        return pkg
-    #    return {}
 
     def _send_to_runner(self, pkg):
         _name = pkg['fetcher'].split('.')[-1]
@@ -103,8 +80,8 @@ class Monitor:
                     self.kiskadee_queue.enqueue_analysis(pkg)
 
     # Move this to model.py
-    def _save_analyzed_project(self, project):
-        if not pkg:
+    def _save_analyzed_project(self, data):
+        if not data:
             return {}
         project = self._query(Package).filter_by(name = data['name']).first()
         if not project:
@@ -116,7 +93,7 @@ class Monitor:
             self._save_analysis(data, analyzer, result, project.versions[-1])
 
     # Move this to model.py
-    def _update_pkg(self, package, pkg):
+    def _update_project(self, package, pkg):
 
         if(package.versions[-1].number == pkg['version']):
             return package
@@ -138,7 +115,7 @@ class Monitor:
             return None
 
     # Move this to model.py
-    def _save_pkg(self, pkg):
+    def _save_project(self, pkg):
         homepage = None
         if ('meta' in pkg) and ('homepage' in pkg['meta']):
             homepage = pkg['meta']['homepage']
@@ -253,11 +230,11 @@ def daemon():
     runner = Runner()
     monitor_process = Process(
             target=monitor.monitor,
-            args=(queues)
+            args=(queues,)
         )
     runner_process = Process(
             target=runner.runner,
-            args=(queues)
+            args=(queues,)
         )
     monitor_process.start()
     runner_process.start()

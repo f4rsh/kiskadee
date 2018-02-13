@@ -93,7 +93,6 @@ class Fetcher(kiskadee.fetchers.Fetcher):
                         }
                 }
                 super().watch(**kiskadee_project)
-            
 
     def _event_to_dict(self, msg):
         msg = msg[msg.find(" ")+1::]

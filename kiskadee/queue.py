@@ -1,5 +1,6 @@
 """Provide kiskadee queues and operations on them."""
 import time
+import dill
 from multiprocessing import Queue
 
 import kiskadee
@@ -23,10 +24,10 @@ def enqueue_project(fetcher_watch):
     """
     def wrapper(*args, **kwargs):
         project = fetcher_watch(*args, **kwargs)
-        kiskadee.queue.Queues.enqueue_project(project)
+        kiskadee.queue.queues.enqueue_project(project)
         fetcher = project['fetcher'].name
         kiskadee.logger.debug(
-                "{} fetcher: Sending package {}_{} for monitor"
+                "{} fetcher: sending package {}_{} for monitor"
                 .format(fetcher, package['name'], package['version'])
             )
         time.sleep(2)
@@ -40,15 +41,14 @@ class Queues():
     """Provide kiskadee queues objects."""
 
     @staticmethod
-    def enqueue_analysis(analysis):
+    def enqueue_analysis(project_to_analysis):
         """Put a analysis on the analysis queue."""
-        analysis.put(analysis)
+        analysis.put(project_to_analysis)
 
     @staticmethod
-    @empty_queue
     def dequeue_analysis():
         """Get a analysis from the analysis queue."""
-        return analysis.get(timeout=1)
+        return analysis.get()
 
     @staticmethod
     def enqueue_result(result):

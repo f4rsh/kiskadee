@@ -1,3 +1,8 @@
+"""
+This integration tests needs docker engine be running and accessible
+by the user that is executing the tests. It also needs selinux running in
+a permissive mode (setenforce 0)
+"""
 import unittest
 import tempfile
 
@@ -6,12 +11,11 @@ import kiskadee.fetchers.example
 import kiskadee.fetchers.debian
 from sqlalchemy.orm import sessionmaker
 from kiskadee import model
-from kiskadee.queue import KiskadeeQueue
+from kiskadee.queue import Queues
 from kiskadee.database import Database
 
 
 class AnalyzersTestCase(unittest.TestCase):
-
     def setUp(self):
         self.engine = Database('db_test').engine
         Session = sessionmaker(bind=self.engine)
@@ -21,16 +25,15 @@ class AnalyzersTestCase(unittest.TestCase):
         self.fetcher = kiskadee.fetchers.debian.Fetcher()
         self.deb_pkg = {'name': 'test',
                         'version': '1.0.0',
-                        'fetcher': kiskadee.fetchers.debian.Fetcher()
+                        'fetcher': kiskadee.fetchers.debian.__name__
                         }
         self.fetcher = model.Fetcher(
                 name='kiskadee-fetcher2', target='university'
             )
         self.session.add(self.fetcher)
         self.session.commit()
-        kiskadee_queue = KiskadeeQueue()
         self.runner = Runner()
-        self.runner.kiskadee_queue = kiskadee_queue
+        self.runner.queues = Queues()
 
     def tearDown(self):
         self.session.close()
@@ -54,12 +57,11 @@ class AnalyzersTestCase(unittest.TestCase):
         source_to_analysis = {
                 'name': 'test',
                 'version': '1.0.0',
-                'fetcher': kiskadee.fetchers.example.Fetcher()
+                'fetcher': kiskadee.fetchers.example.__name__
         }
 
         self.runner.call_analyzers(source_to_analysis)
-        analyzed_pkg = self.runner.kiskadee_queue.dequeue_result()
-
+        analyzed_pkg = self.runner.queues.dequeue_result()
         self.assertEqual(analyzed_pkg['name'], source_to_analysis['name'])
         self.assertIn('cppcheck', analyzed_pkg['results'])
         self.assertIn('flawfinder', analyzed_pkg['results'])
@@ -92,6 +94,7 @@ class AnalyzersTestCase(unittest.TestCase):
         )
 
         self.assertIsNone(source_path)
+
 
 if __name__ == '__main__':
     unittest.main()

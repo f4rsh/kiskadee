@@ -3,8 +3,8 @@ from sqlalchemy.orm import sessionmaker
 
 from kiskadee import model
 from kiskadee.monitor import Monitor
-from kiskadee.queue import packages_queue
-from kiskadee.model import Package, Fetcher, create_analyzers, Report, Analysis
+from kiskadee.queue import Queues
+from kiskadee.model import Package, create_analyzers, Report, Analysis
 import kiskadee.queue
 import kiskadee.fetchers.debian
 import kiskadee.fetchers.anitya
@@ -18,12 +18,13 @@ class MonitorTestCase(unittest.TestCase):
         Session = sessionmaker(bind=self.engine)
         self.session = Session()
         self.monitor = Monitor(self.session)
+        self.queues = Queues()
         model.Base.metadata.create_all(self.engine)
         create_analyzers(self.session)
         self.pkg1 = {
                 'name': 'curl',
                 'version': '7.52.1-5',
-                'fetcher': kiskadee.fetchers.debian,
+                'fetcher': kiskadee.fetchers.debian.__name__,
                 'meta': {'directory': 'pool/main/c/curl'},
                 'results': {
                     'cppcheck': '<>',
@@ -32,7 +33,7 @@ class MonitorTestCase(unittest.TestCase):
 
         self.pkg2 = {'name': 'urlscan',
                      'version': '0.8.2',
-                     'fetcher': kiskadee.fetchers.debian,
+                     'fetcher': kiskadee.fetchers.debian.__name__,
                      'meta': {'directory': 'pool/main/u/urlscan'},
                      'results': {
                             'cppcheck': '<>',
@@ -41,7 +42,7 @@ class MonitorTestCase(unittest.TestCase):
 
         self.pkg3 = {'name': 'curl',
                      'version': '7.52.2-5',
-                     'fetcher': kiskadee.fetchers.debian,
+                     'fetcher': kiskadee.fetchers.debian.__name__,
                      'meta': {'directory': 'pool/main/c/curl'},
                      'results': {
                             'cppcheck': '<>',
@@ -49,7 +50,7 @@ class MonitorTestCase(unittest.TestCase):
                      'fetcher_id': 1}
         self.pkg4 = {'name': 'urlanitya',
                      'version': '0.11',
-                     'fetcher': kiskadee.fetchers.anitya,
+                     'fetcher': kiskadee.fetchers.anitya.__name__,
                      'meta': {
                             'backend': 'gitHub',
                             'homepage': 'https://github.com/GesielFreitas/Cros'
@@ -78,31 +79,14 @@ class MonitorTestCase(unittest.TestCase):
         fetcher = kiskadee.fetchers.debian.Fetcher()
         self.assertEqual(fetcher.name, 'debian')
 
-    def test_save_some_fetcher(self):
-        fetcher = kiskadee.fetchers.debian.Fetcher()
-        self.monitor._save_fetcher(fetcher)
-        _fetchers = self.monitor.session.query(Fetcher).all()
-        self.assertEqual(len(_fetchers), 1)
-        self.assertEqual(_fetchers[0].name, 'debian')
-        self.assertEqual(_fetchers[0].description,
-                         fetcher.config['description'])
-
     def test_save_package(self):
         self.monitor._save_fetcher(kiskadee.fetchers.debian.Fetcher())
-        packages_queue.put(self.pkg1)
-        packages_queue.put(self.pkg2)
-
-        _pkg = self.monitor.dequeue_package()
-        self.monitor._save_analyzed_pkg(_pkg)
-        _pkgs = self.monitor.session.query(Package).all()
-        self.assertEqual(len(_pkgs), 1)
-        self.assertEqual(_pkgs[0].name, _pkg['name'])
-
-        _pkg = self.monitor.dequeue_package()
-        self.monitor._save_analyzed_pkg(_pkg)
+        self.monitor._save_analyzed_project(self.pkg1)
+        self.monitor._save_analyzed_project(self.pkg2)
         _pkgs = self.monitor.session.query(Package).all()
         self.assertEqual(len(_pkgs), 2)
-        self.assertEqual(_pkgs[1].name, _pkg['name'])
+        self.assertEqual(_pkgs[0].name, self.pkg1['name'])
+        self.assertEqual(_pkgs[1].name, self.pkg2['name'])
 
     def test_save_reports(self):
         _fetcher = model.Fetcher(
@@ -142,21 +126,21 @@ class MonitorTestCase(unittest.TestCase):
 
     def test_save_version(self):
         self.monitor._save_fetcher(kiskadee.fetchers.debian.Fetcher())
-        self.monitor._save_analyzed_pkg(self.pkg1)
+        self.monitor._save_analyzed_project(self.pkg1)
         _pkgs = self.monitor.session.query(Package).all()
         _version = _pkgs[0].versions[0].number
         self.assertEqual(_version, self.pkg1['version'])
 
     def test_update_version(self):
         self.monitor._save_fetcher(kiskadee.fetchers.debian.Fetcher())
-        packages_queue.put(self.pkg1)
-        packages_queue.put(self.pkg3)
+        self.queues.enqueue_project(self.pkg1)
+        self.queues.enqueue_project(self.pkg3)
 
-        _pkg = self.monitor.dequeue_package()
-        self.monitor._save_analyzed_pkg(_pkg)
+        _pkg = self.queues.dequeue_project()
+        self.monitor._save_analyzed_project(_pkg)
 
-        _pkg = self.monitor.dequeue_package()
-        self.monitor._save_analyzed_pkg(_pkg)
+        _pkg = self.queues.dequeue_project()
+        self.monitor._save_analyzed_project(_pkg)
 
         _pkgs = self.monitor.session.query(Package).all()
         self.assertEqual(len(_pkgs), 1)
@@ -171,11 +155,9 @@ class MonitorTestCase(unittest.TestCase):
 
     def test_save_package_anitya(self):
         self.monitor._save_fetcher(kiskadee.fetchers.anitya.Fetcher())
-        packages_queue.put(self.pkg4)
-
-        _pkg = self.monitor.dequeue_package()
-        self.monitor._save_analyzed_pkg(_pkg)
-
+        self.queues.enqueue_project(self.pkg4)
+        _pkg = self.queues.dequeue_project()
+        self.monitor._save_analyzed_project(_pkg)
         _pkgs = self.monitor.session.query(Package).all()
         self.assertEqual(len(_pkgs), 1)
         self.assertEqual(_pkgs[0].homepage, _pkg['meta']['homepage'])

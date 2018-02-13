@@ -9,8 +9,7 @@ class Fetcher(kiskadee.fetchers.Fetcher):
         """Use sources from test suite."""
         return 'kiskadee/tests/test_source/test_source.tar.gz'
 
-    @kiskadee.queue.enqueue_project
-    def watch(self):
+    def watch(self, **kwargs):
         """There is no proper API to inspect new example versions.
         It should not matter, since example will not receive updates.
         """
