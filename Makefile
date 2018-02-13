@@ -5,8 +5,20 @@ help:
 	@printf "Available targets: check, analyzers, clean\n\n"
 
 check:
-	coverage run --omit="lib/*","setup.py","kiskadee/tests/*",".eggs/*",".venv/*" ./setup.py test
+	coverage run --omit="lib/*","setup.py","kiskadee/tests/*",".eggs/*",".venv/*","/usr/*" -m unittest kiskadee/tests/*/*.py
 	coverage html
+
+check_units:
+	python3 -m unittest kiskadee/tests/units/*.py
+
+check_integration:
+	python3 -m unittest kiskadee/tests/integration/*.py
+
+check_api:
+	python3 -m unittest kiskadee/tests/api/*.py
+
+check_plugins:
+	python3 -m unittest kiskadee/tests/plugins/*.py
 
 analyzers:
 	docker ps 2> /dev/null; \
