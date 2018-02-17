@@ -29,7 +29,8 @@ Vagrant.configure(2) do |config|
     # https://developer.fedoraproject.org/tools/vagrant/vagrant-nfs.html
     # After enable nfs-server, you will need to start the service.
     core.vm.synced_folder "./", "/home/vagrant/kiskadee", type: "nfs", nfs_udp: false
-    core.vm.network "public_network", ip: ips[:core]
+    core.vm.network "public_network", ip: ips[:core], 
+    :bridge => 'virbr0', :dev => 'virbr0'
     core.vm.provider "libvirt" do |v|
       v.memory = 2048
     end

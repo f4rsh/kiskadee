@@ -1,15 +1,3 @@
-- name: Create kiskadee group
-  group:
-    name: kiskadee
-    state: present
-
-- name: Create kiskadee user
-  user:
-    name: kiskadee
-    groups: kiskadee, wheel
-    append: yes
-    shell: /bin/bash
-
 # TODO: do not turn selinux off. Add rules instead
 - name: Turn off selinux
   command: setenforce 0

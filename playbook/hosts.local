@@ -1,5 +1,5 @@
 [kiskadee-core]
-core-host ansible_host=10.18.0.115
+core-host ansible_host=192.168.121.6 ansible_user=root
 
 [kiskadee-frontend]
 frontend-host ansible_host=10.18.0.116
