@@ -13,7 +13,7 @@ class ModelTestCase(unittest.TestCase):
         Session = sessionmaker(bind=self.engine)
         self.session = Session()
         model.Base.metadata.create_all(self.engine)
-        model.create_analyzers(self.session)
+        model.Analyzer.create_analyzers(self.session)
         self.fetcher = model.Fetcher(
               name='kiskadee-fetcher', target='university'
             )

@@ -4,7 +4,7 @@ from sqlalchemy.orm import sessionmaker
 from kiskadee import model
 from kiskadee.monitor import Monitor
 from kiskadee.queue import Queues
-from kiskadee.model import Package, create_analyzers, Report, Analysis
+from kiskadee.model import Package, Analyzer, Report, Analysis
 import kiskadee.queue
 import kiskadee.fetchers.debian
 import kiskadee.fetchers.anitya
@@ -20,7 +20,7 @@ class MonitorTestCase(unittest.TestCase):
         self.monitor = Monitor(self.session)
         self.queues = Queues()
         model.Base.metadata.create_all(self.engine)
-        create_analyzers(self.session)
+        Analyzer.create_analyzers(self.session)
         self.pkg1 = {
                 'name': 'curl',
                 'version': '7.52.1-5',
@@ -81,8 +81,8 @@ class MonitorTestCase(unittest.TestCase):
 
     def test_save_package(self):
         self.monitor._save_fetcher(kiskadee.fetchers.debian.Fetcher())
-        self.monitor._save_analyzed_project(self.pkg1)
-        self.monitor._save_analyzed_project(self.pkg2)
+        self.monitor.save_analyzed_project(self.pkg1)
+        self.monitor.save_analyzed_project(self.pkg2)
         _pkgs = self.monitor.session.query(Package).all()
         self.assertEqual(len(_pkgs), 2)
         self.assertEqual(_pkgs[0].name, self.pkg1['name'])
@@ -126,7 +126,7 @@ class MonitorTestCase(unittest.TestCase):
 
     def test_save_version(self):
         self.monitor._save_fetcher(kiskadee.fetchers.debian.Fetcher())
-        self.monitor._save_analyzed_project(self.pkg1)
+        self.monitor.save_analyzed_project(self.pkg1)
         _pkgs = self.monitor.session.query(Package).all()
         _version = _pkgs[0].versions[0].number
         self.assertEqual(_version, self.pkg1['version'])
@@ -137,10 +137,10 @@ class MonitorTestCase(unittest.TestCase):
         self.queues.enqueue_project(self.pkg3)
 
         _pkg = self.queues.dequeue_project()
-        self.monitor._save_analyzed_project(_pkg)
+        self.monitor.save_analyzed_project(_pkg)
 
         _pkg = self.queues.dequeue_project()
-        self.monitor._save_analyzed_project(_pkg)
+        self.monitor.save_analyzed_project(_pkg)
 
         _pkgs = self.monitor.session.query(Package).all()
         self.assertEqual(len(_pkgs), 1)
@@ -157,7 +157,7 @@ class MonitorTestCase(unittest.TestCase):
         self.monitor._save_fetcher(kiskadee.fetchers.anitya.Fetcher())
         self.queues.enqueue_project(self.pkg4)
         _pkg = self.queues.dequeue_project()
-        self.monitor._save_analyzed_project(_pkg)
+        self.monitor.save_analyzed_project(_pkg)
         _pkgs = self.monitor.session.query(Package).all()
         self.assertEqual(len(_pkgs), 1)
         self.assertEqual(_pkgs[0].homepage, _pkg['meta']['homepage'])

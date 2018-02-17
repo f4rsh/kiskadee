@@ -21,7 +21,7 @@ class AnalyzersTestCase(unittest.TestCase):
         Session = sessionmaker(bind=self.engine)
         self.session = Session()
         model.Base.metadata.create_all(self.engine)
-        model.create_analyzers(self.session)
+        model.Analyzer.create_analyzers(self.session)
         self.fetcher = kiskadee.fetchers.debian.Fetcher()
         self.deb_pkg = {'name': 'test',
                         'version': '1.0.0',

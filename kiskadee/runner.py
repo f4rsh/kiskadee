@@ -30,7 +30,7 @@ class Runner:
         kiskadee.logger.debug('Starting runner subprocess')
         kiskadee.logger.debug('runner PID: {}'.format(os.getpid()))
         session = kiskadee.database.Database().session
-        kiskadee.model.create_analyzers(session)
+        kiskadee.model.Analyzer.create_analyzers(session)
         self.queues = queues
         while RUNNING:
             kiskadee.logger.debug('RUNNER: Waiting to dequeue'\

@@ -7,21 +7,14 @@ import threading
 from multiprocessing import Process
 import time
 import os
-import json
 import importlib
 
 import kiskadee.database
-from kiskadee.report import CppcheckReport, FlawfinderReport
 from kiskadee.runner import Runner
 import kiskadee.queue
-from kiskadee.model import Package, Fetcher, Version, Report
+from kiskadee.model import Package, Fetcher, Version, Report, Analysis
 
 RUNNING = True
-
-REPORTERS = {
-    'cppcheck': CppcheckReport,
-    'flawfinder': FlawfinderReport
-}
 
 class Monitor:
     """Provide kiskadee monitoring objects."""
@@ -51,163 +44,42 @@ class Monitor:
             pkg = self.kiskadee_queue.dequeue_project()
 
             if pkg:
-                self._send_to_runner(pkg)
+                self.send_to_runner(pkg)
             time.sleep(2)
             analyzed_project = self.kiskadee_queue.dequeue_result()
-            self._save_analyzed_project(analyzed_project)
+            self.save_analyzed_project(analyzed_project)
 
-    def _send_to_runner(self, pkg):
-        _name = pkg['fetcher'].split('.')[-1]
+    def send_to_runner(self, data):
+        _name = data['fetcher'].split('.')[-1]
         _fetcher = self._query(Fetcher).filter_by(name = _name).first()
-        _package = (
-                self._query(Package)
-                .filter(Package.name == pkg['name']).first()
-            )
+        _package = self._query(Package).filter_by(name = data['name']).first()
 
         if _fetcher:
-            pkg["fetcher_id"] = _fetcher.id
+            data["fetcher_id"] = _fetcher.id
             if not _package:
                 kiskadee.logger.debug(
                         "MONITOR: Sending package {}_{} "
-                        " for analysis".format(pkg['name'], pkg['version'])
+                        " for analysis".format(data['name'], data['version'])
                 )
-                self.kiskadee_queue.enqueue_analysis(pkg)
+                self.kiskadee_queue.enqueue_analysis(data)
             else:
-                new_version = pkg['version']
+                new_version = data['version']
                 analysed_version = _package.versions[-1].number
-                fetcher = importlib.import_module(pkg['fetcher']).Fetcher()
+                fetcher = importlib.import_module(data['fetcher']).Fetcher()
                 if (fetcher.compare_versions(new_version, analysed_version)):
-                    self.kiskadee_queue.enqueue_analysis(pkg)
+                    self.kiskadee_queue.enqueue_analysis(data)
 
-    # Move this to model.py
-    def _save_analyzed_project(self, data):
+    def save_analyzed_project(self, data):
         if not data:
             return {}
         project = self._query(Package).filter_by(name = data['name']).first()
         if not project:
-            project = self._save_project(data)
+            project = Package.save(self.session, data)
         if project:
-            project = self._update_project(project, data)
+            project = Package.update(self.session, project, data)
 
         for analyzer, result in data['results'].items():
-            self._save_analysis(data, analyzer, result, project.versions[-1])
-
-    # Move this to model.py
-    def _update_project(self, package, pkg):
-
-        if(package.versions[-1].number == pkg['version']):
-            return package
-        try:
-            _new_version = Version(
-                    number=pkg['version'],
-                    package_id=package.id
-                    )
-            package.versions.append(_new_version)
-            self.session.add(package)
-            self.session.commit()
-            kiskadee.logger.debug(
-                    "MONITOR: Sending package {}_{}"
-                    "for analysis".format(pkg['name'], pkg['version'])
-                    )
-            return package
-        except ValueError:
-            kiskadee.logger.debug("MONITOR: Could not compare versions")
-            return None
-
-    # Move this to model.py
-    def _save_project(self, pkg):
-        homepage = None
-        if ('meta' in pkg) and ('homepage' in pkg['meta']):
-            homepage = pkg['meta']['homepage']
-
-        _package = Package(
-                name=pkg['name'],
-                homepage=homepage,
-                fetcher_id=pkg['fetcher_id']
-                )
-        self.session.add(_package)
-        self.session.commit()
-        _version = Version(number=pkg['version'],
-                           package_id=_package.id)
-        self.session.add(_version)
-        self.session.commit()
-        return _package
-
-    # Move this to model.py
-    def _save_reports(self, analysis, pkg, analyzer_name):
-        try:
-            results = analysis['results']
-            analyzer_report = REPORTERS[analyzer_name](results)
-            _reports = Report()
-            _reports.results = json.dumps(
-                    analyzer_report
-                    ._compute_reports(analyzer_name)
-                )
-            _reports.analysis_id = analysis['id']
-            self.session.add(_reports)
-            self.session.commit()
-            kiskadee.logger.debug(
-                    "MONITOR: Saved analysis reports for {} package"
-                    .format(pkg["name"])
-                )
-        except KeyError as key:
-            kiskadee.logger.debug(
-                    "ERROR: There's no reporter " +
-                    "to get reports from {} analyzer. ".format(key) +
-                    "Make shure to import or implement them."
-                )
-        except Exception as err:
-            kiskadee.logger.debug(
-                    "MONITOR: Failed to get analysis reports to {} package"
-                    .format(pkg["name"])
-                )
-            kiskadee.logger.debug(err)
-        return
-
-    # Move this to model.py
-    def _save_analysis(self, pkg, analyzer, result, version):
-        _analysis = kiskadee.model.Analysis()
-        try:
-            _analyzer = self._query(kiskadee.model.Analyzer).\
-                    filter_by(name = analyzer).first()
-            _analysis.analyzer_id = _analyzer.id
-            _analysis.version_id = version.id
-            _analysis.raw = json.loads(result)
-            self.session.add(_analysis)
-            self.session.commit()
-            dict_analysis = {
-                    'results': _analysis.raw['results'],
-                    'id': _analysis.id
-                }
-            self._save_reports(dict_analysis, pkg, _analyzer.name)
-            kiskadee.logger.debug(
-                    "MONITOR: Saved analysis done by {} for package: {}-{}"
-                    .format(analyzer, pkg["name"], pkg["version"])
-                )
-            return
-        except Exception as err:
-            kiskadee.logger.debug(
-                    "MONITOR: The required analyzer was " +
-                    "not registered in kiskadee"
-                )
-            kiskadee.logger.debug(err)
-            return None
-
-    # Move this to model.py
-    def _save_fetcher(self, fetcher):
-        name = fetcher.name
-        kiskadee.logger.debug(
-                "MONITOR: Saving {} fetcher in database".format(name)
-            )
-        if not self.session.query(Fetcher)\
-                .filter(Fetcher.name == name).first():
-            _fetcher = Fetcher(
-                    name=name,
-                    target=fetcher.config['target'],
-                    description=fetcher.config['description']
-                )
-            self.session.add(_fetcher)
-            self.session.commit()
+            Analysis.save(self.session, data, analyzer, result, project.versions[-1])
 
     def _query(self, arg):
         return self.session.query(arg)

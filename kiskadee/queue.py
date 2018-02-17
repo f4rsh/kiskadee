@@ -1,6 +1,5 @@
 """Provide kiskadee queues and operations on them."""
 import time
-import dill
 from multiprocessing import Queue
 
 import kiskadee

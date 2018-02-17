@@ -3,7 +3,10 @@
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import Column, Integer, UnicodeText, UniqueConstraint,\
                        Sequence, Unicode, ForeignKey, orm, JSON
+import json
+
 import kiskadee
+from kiskadee.report import CppcheckReport, FlawfinderReport
 
 Base = declarative_base()
 
@@ -26,6 +29,47 @@ class Package(Base):
     __table_args__ = (
             UniqueConstraint('name', 'fetcher_id'),
             )
+
+    @staticmethod
+    def save(session, data):
+        homepage = None
+        if ('meta' in data) and ('homepage' in data['meta']):
+            homepage = data['meta']['homepage']
+
+        _package = Package(
+                name=data['name'],
+                homepage=homepage,
+                fetcher_id=data['fetcher_id']
+                )
+        session.add(_package)
+        session.commit()
+        _version = Version(number=data['version'],
+                           package_id=_package.id)
+        session.add(_version)
+        session.commit()
+        return _package
+
+    @staticmethod
+    def update(session, project, data):
+
+        if(project.versions[-1].number == data['version']):
+            return project
+        try:
+            _new_version = Version(
+                    number=data['version'],
+                    project_id=project.id
+                    )
+            project.versions.append(_new_version)
+            session.add(project)
+            session.commit()
+            kiskadee.logger.debug(
+                    "MONITOR: Sending project {}_{}"
+                    "for analysis".format(data['name'], data['version'])
+                    )
+            return project
+        except ValueError:
+            kiskadee.logger.debug("MONITOR: Could not compare versions")
+            return None
 
 
 class Fetcher(Base):
@@ -64,6 +108,23 @@ class Analyzer(Base):
     version = Column(Unicode(255), nullable=True)
     analysis = orm.relationship('Analysis', backref='analyzers')
 
+    @staticmethod
+    def create_analyzers(_session):
+        """Create the analyzers on database.
+
+        The kiskadee analyzers are defined on the section `analyzers` of the
+        kiskadee.conf file. The `_session` argument represents a sqlalchemy
+        session.
+        """
+        list_of_analyzers = dict(kiskadee.config._sections["analyzers"])
+        for _name, _version in list_of_analyzers.items():
+            if not _session.query(Analyzer)\
+                            .filter_by(name = _name, version = _version )\
+                            .first():
+                new_analyzer = kiskadee.model.Analyzer(name = _name,
+                                                       version = _version)
+                _session.add(new_analyzer)
+        _session.commit()
 
 class Analysis(Base):
     """Abstraction of a package analysis."""
@@ -77,9 +138,43 @@ class Analysis(Base):
     report = orm.relationship('Report',
                               uselist=False, back_populates='analysis')
 
+    @staticmethod
+    def save(session, data, analyzer, result, version):
+        _analysis = kiskadee.model.Analysis()
+        try:
+            _analyzer = session.query(kiskadee.model.Analyzer).\
+                    filter_by(name = analyzer).first()
+            _analysis.analyzer_id = _analyzer.id
+            _analysis.version_id = version.id
+            _analysis.raw = json.loads(result)
+            session.add(_analysis)
+            session.commit()
+            dict_analysis = {
+                    'results': _analysis.raw['results'],
+                    'id': _analysis.id
+                }
+            Report.save(session, dict_analysis, data, _analyzer.name)
+            kiskadee.logger.debug(
+                    "MONITOR: Saved analysis done by {} for package: {}-{}"
+                    .format(analyzer, data["name"], data["version"])
+                )
+            return
+        except Exception as err:
+            kiskadee.logger.debug(
+                    "MONITOR: The required analyzer was " +
+                    "not registered in kiskadee"
+                )
+            kiskadee.logger.debug(err)
+            return None
+
 
 class Report(Base):
     """Abstraction of a analysis report."""
+
+    REPORTERS = {
+        'cppcheck': CppcheckReport,
+        'flawfinder': FlawfinderReport
+    }
 
     __tablename__ = 'reports'
     id = Column(Integer,
@@ -88,20 +183,34 @@ class Report(Base):
     results = Column(JSON)
     analysis = orm.relationship('Analysis', back_populates='report')
 
+    @staticmethod
+    def save(session, analysis, data, analyzer_name):
+        try:
+            results = analysis['results']
+            analyzer_report = Report.REPORTERS[analyzer_name](results)
+            _reports = Report()
+            _reports.results = json.dumps(
+                    analyzer_report
+                    ._compute_reports(analyzer_name)
+                )
+            _reports.analysis_id = analysis['id']
+            session.add(_reports)
+            session.commit()
+            kiskadee.logger.debug(
+                    "MONITOR: Saved analysis reports for {} package"
+                    .format(data["name"])
+                )
+        except KeyError as key:
+            kiskadee.logger.debug(
+                    "ERROR: There's no reporter " +
+                    "to get reports from {} analyzer. ".format(key) +
+                    "Make shure to import or implement them."
+                )
+        except Exception as err:
+            kiskadee.logger.debug(
+                    "MONITOR: Failed to get analysis reports to {} package"
+                    .format(data["name"])
+                )
+            kiskadee.logger.debug(err)
+        return
 
-def create_analyzers(_session):
-    """Create the analyzers on database.
-
-    The kiskadee analyzers are defined on the section `analyzers` of the
-    kiskadee.conf file. The `_session` argument represents a sqlalchemy
-    session.
-    """
-    list_of_analyzers = dict(kiskadee.config._sections["analyzers"])
-    for name, version in list_of_analyzers.items():
-        if not (_session.query(Analyzer).filter(Analyzer.name == name).
-                filter(Analyzer.version == version).first()):
-            new_analyzer = kiskadee.model.Analyzer()
-            new_analyzer.name = name
-            new_analyzer.version = version
-            _session.add(new_analyzer)
-    _session.commit()
