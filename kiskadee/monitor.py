@@ -1,6 +1,6 @@
 """Provide kiskadee monitoring capabilities.
 
-kiskadee monitors repositories checking for new package versions to be
+kiskadee monitors repositories checking for new project versions to be
 analyzed. This module provides such capabilities.
 """
 import threading
@@ -19,55 +19,57 @@ RUNNING = True
 class Monitor:
     """Provide kiskadee monitoring objects."""
 
-    def __init__(self, _session):
+    def __init__(self, _session, queues):
         """Return a non initialized Monitor."""
         self.session = _session
-        self.kiskadee_queue = None
+        self.kiskadee_queue = queues
 
-    def monitor(self, queues):
-        """Dequeue packages and check if they need to be analyzed.
-
-        The packages are dequeued from the `package_queue`. When a package
-        needs to be analyzed, this package is enqueued in the `analyses_queue`
-        so the runner component can trigger an analysis.  Each fetcher must
-        enqueue its packages in the `packages_queue`.
-        """
+    def start(self):
         kiskadee.logger.debug('kiskadee PID: {}'.format(os.getppid()))
         kiskadee.logger.debug('Starting monitor subprocess')
         kiskadee.logger.debug('monitor PID: {}'.format(os.getpid()))
 
         for fetcher in kiskadee.load_fetchers():
-            _start_fetcher(fetcher.Fetcher().watch)
+            thread = Monitor._start_fetcher(fetcher.Fetcher().watch)
 
         while RUNNING:
-            self.kiskadee_queue = queues
-            pkg = self.kiskadee_queue.dequeue_project()
-
-            if pkg:
-                self.send_to_runner(pkg)
-            time.sleep(2)
-            analyzed_project = self.kiskadee_queue.dequeue_result()
+            new_project = self.dequeue_from_fetchers()
+            self.send_project_to_runner(new_project)
+            analyzed_project = self.dequeue_analysis_from_runner()
             self.save_analyzed_project(analyzed_project)
 
-    def send_to_runner(self, data):
-        _name = data['fetcher'].split('.')[-1]
-        _fetcher = self._query(Fetcher).filter_by(name = _name).first()
-        _package = self._query(Package).filter_by(name = data['name']).first()
+    def dequeue_project_from_fetchers(self):
+        new_project = self.kiskadee_queue.dequeue_project()
+        return new_project if new_project else {}
 
-        if _fetcher:
-            data["fetcher_id"] = _fetcher.id
-            if not _package:
+    def dequeue_analysis_from_runner(self):
+        return self.kiskadee_queue.dequeue_result()
+
+    def send_project_to_runner(self, data):
+        if data:
+            fetcher, project = self.get_fetcher_and_project(data)
+            data["fetcher_id"] = fetcher.id if fetcher else ''
+            if not project:
                 kiskadee.logger.debug(
-                        "MONITOR: Sending package {}_{} "
+                        "MONITOR: Sending project {}_{} "
                         " for analysis".format(data['name'], data['version'])
                 )
                 self.kiskadee_queue.enqueue_analysis(data)
-            else:
-                new_version = data['version']
-                analysed_version = _package.versions[-1].number
-                fetcher = importlib.import_module(data['fetcher']).Fetcher()
-                if (fetcher.compare_versions(new_version, analysed_version)):
-                    self.kiskadee_queue.enqueue_analysis(data)
+            elif self.not_analyzed_project_version(project, data):
+                self.kiskadee_queue.enqueue_analysis(data)
+
+    def get_fetcher_and_project(self, data):
+        fetcher_name = data['fetcher'].split('.')[-1]
+        project_name = data['name']
+        fetcher = self._query(Fetcher).filter_by(name = fetcher_name).first()
+        project = self._query(Package).filter_by(name = project_name).first()
+        return fetcher, project
+
+    def not_analyzed_project_version(self, project, data):
+        project_version = data['version']
+        analysed_version = project.versions[-1].number
+        fetcher = importlib.import_module(data['fetcher']).Fetcher()
+        fetcher.compare_versions(project_version, analysed_version)
 
     def save_analyzed_project(self, data):
         if not data:
@@ -85,12 +87,13 @@ class Monitor:
         return self.session.query(arg)
 
 
-def _start_fetcher(module, joinable=False, timeout=None):
-    module_as_a_thread = threading.Thread(target=module)
-    module_as_a_thread.daemon = True
-    module_as_a_thread.start()
-    if joinable or timeout:
-        module_as_a_thread.join(timeout)
+    @staticmethod
+    def _start_fetcher(module, joinable=False, timeout=None):
+        module_as_a_thread = threading.Thread(target=module)
+        module_as_a_thread.daemon = True
+        module_as_a_thread.start()
+        if joinable or timeout:
+            module_as_a_thread.join(timeout)
 
 
 def daemon():
@@ -98,11 +101,10 @@ def daemon():
     # TODO: improve with start/stop system
     queues = kiskadee.queue.Queues()
     session = kiskadee.database.Database().session
-    monitor = Monitor(session)
+    monitor = Monitor(session, queues)
     runner = Runner()
     monitor_process = Process(
-            target=monitor.monitor,
-            args=(queues,)
+            target=monitor.start,
         )
     runner_process = Process(
             target=runner.runner,

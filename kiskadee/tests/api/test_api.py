@@ -50,10 +50,10 @@ class ApiTestCase(unittest.TestCase):
         Monitor(kiskadee.api.app.kiskadee_db_session())
         db_session = kiskadee.api.app.kiskadee_db_session()
         db_session.query(kiskadee.model.Package)\
-                  .filter_by().id = MagicMock(side_effect=side_effect)
+                  .filter_by().id = MagicMock()
 
         db_session.query(kiskadee.model.Version)\
-                  .filter_by().id = MagicMock(side_effect=side_effect)
+                  .filter_by().id = MagicMock()
         db_session.query().options()\
                   .filter().all = MagicMock(return_value=[analysis])
 
