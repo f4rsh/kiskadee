@@ -40,46 +40,6 @@ class MonitorTestCase(unittest.TestCase):
                     'flawfinder': '><'},
                 'fetcher_id': 1}
 
-        self.data2 = {'name': 'urlscan',
-                'version': '0.8.2',
-                'fetcher': kiskadee.fetchers.debian.__name__,
-                'meta': {'directory': 'pool/main/u/urlscan'},
-                'results': {
-                    'cppcheck': '<>',
-                    'flawfinder': '><'},
-                'fetcher_id': 1}
-
-        self.data3 = {'name': 'curl',
-                'version': '7.52.2-5',
-                'fetcher': kiskadee.fetchers.debian.__name__,
-                'meta': {'directory': 'pool/main/c/curl'},
-                'results': {
-                    'cppcheck': '<>',
-                    'flawfinder': '><'},
-                'fetcher_id': 1}
-        self.data4 = {'name': 'urlanitya',
-                'version': '0.11',
-                'fetcher': kiskadee.fetchers.anitya.__name__,
-                'meta': {
-                    'backend': 'gitHub',
-                    'homepage': 'https://github.com/GesielFreitas/Cros'
-                    },
-                'results': {
-                    'cppcheck': '<>',
-                    'flawfinder': '><'},
-                'fetcher_id': 1}
-        self.analysis = {
-                'analyzer_id': 1,
-                'id': 1,
-                'raw': {
-                    'results': [
-                        {'severity': 'warning'},
-                        {'severity': 'style'},
-                        {'severity': 'error'}
-                        ]
-                    }
-                }
-
     def test_dequeue_project_from_fetcher(self):
         self.example_fetcher.watch()
         monitored_project = self.monitor.dequeue_project_from_fetchers()
@@ -107,19 +67,12 @@ class MonitorTestCase(unittest.TestCase):
         self.monitor.get_fetcher_and_project = MagicMock(
                 return_value=[fetcher, {}]
                 )
-        self.monitor.not_analyzed_project_version = MagicMock(
+        self.monitor.is_a_new_project_version = MagicMock(
                 return_value=True
                 )
         self.monitor.send_project_to_runner(self.data1)
-        self.assertEqual(self.monitor.kiskadee_queue.dequeue_analysis(), self.data1)
-
-    @unittest.skip("will implement")
-    def test_receive_analysis_from_runner(self):
-        pass
-
-    @unittest.skip("will implement")
-    def test_save_analysed_runner_project(self):
-        pass
+        self.assertEqual(self.monitor.queues.dequeue_analysis(),
+                self.data1)
 
         if __name__ == '__main__':
             unittest.main()

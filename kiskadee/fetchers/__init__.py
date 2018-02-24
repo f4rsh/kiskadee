@@ -93,6 +93,9 @@ class Fetcher(abc.ABC):
             download_path = os.path.join(path, file_name)
             with open(download_path, 'wb') as info:
                 info.write(data)
+            kiskadee.logger.debug(
+                    "Downloaded {} source in {} path".format(file_name, path)
+                    )
             return download_path
         except Exception as err:
             kiskadee.logger.debug(

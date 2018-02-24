@@ -42,17 +42,33 @@ class Queues():
     @staticmethod
     def enqueue_analysis(project_to_analysis):
         """Put a analysis on the analysis queue."""
+        log_msg = "Sending project {}_{} for analysis"\
+                .format(project_to_analysis['name'],
+                        project_to_analysis['version'])
+        kiskadee.logger.debug(log_msg)
         analysis.put(project_to_analysis)
 
     @staticmethod
     def dequeue_analysis():
         """Get a analysis from the analysis queue."""
-        return analysis.get()
+        project_to_analysis = analysis.get()
+        kiskadee.logger.debug(
+                'RUNNER: deqeued {}-{} from {}'
+                .format(project_to_analysis['name'],
+                        project_to_analysis['version'],
+                        project_to_analysis['fetcher'])
+            )
+        return project_to_analysis
 
     @staticmethod
-    def enqueue_result(result):
+    def enqueue_result(project):
         """Put a result on the results queue."""
-        results.put(result)
+        kiskadee.logger.debug(
+                "RUNNER: Sending {}-{} to Monitor"
+                .format(project["name"],
+                        project["version"])
+            )
+        results.put(project)
 
     @staticmethod
     @empty_queue
