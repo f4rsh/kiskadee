@@ -1,5 +1,7 @@
 # Change Log
 
+## [Unreleased]
+
 ## [0.4.3] - 2018-03-07
 ### Fixed
 - Configuration file system path.
