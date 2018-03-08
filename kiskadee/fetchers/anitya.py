@@ -44,7 +44,7 @@ class Fetcher(kiskadee.fetchers.Fetcher):
         backend_name = source_data.get('meta').get('backend').lower()
         run_backend = self._load_backend(backend_name)
         if run_backend:
-            return run_backend(source_data, path)
+            return run_backend(self, source_data, path)
         else:
             return {}
 
@@ -109,17 +109,17 @@ class Fetcher(kiskadee.fetchers.Fetcher):
 class Backends():
     """Class to implement Anitya Backends.
 
-    Each method implemented in this class, should returns a absolute path
+    Each method implemented in this class, should return an absolute path
     to the downloaded source, or a empty dict if the download could
     not be made.
     """
 
-    def github(self, source_data, path):
+    def github(self, fetcher, source_data, path):
         """Backend implementation to download github sources."""
         source_version = ''.join([source_data.get('version'), '.tar.gz'])
         homepage = source_data.get('meta').get('homepage')
         url = ''.join([homepage, '/archive/', source_version])
-        return self.download(path, url, source_version)
+        return fetcher.download(path, url, source_version)
 
 
 class AnityaConsumer(fedmsg.consumers.FedmsgConsumer):

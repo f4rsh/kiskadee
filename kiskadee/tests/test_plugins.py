@@ -180,13 +180,14 @@ class TestAnityaFetcher(unittest.TestCase):
 
     def test_get_sources(self):
 
-        def mock_github(self, source_data, path):
+        def mock_github(self, fetcher, source_data, path):
             return 'kiskadee/tests/test_source/Sources.gz'
 
         kiskadee.fetchers.anitya.Backends.github = mock_github
         source_data = {'meta': {'backend': 'GitHub'}}
         source_path = self.anitya_fetcher.get_sources(source_data)
-        self.assertEqual(source_path, mock_github("self", "foo", "bla"))
+        self.assertEqual(source_path,
+                         mock_github("self", "fetcher", "foo", "bla"))
 
     def test_create_package_dict(self):
 
