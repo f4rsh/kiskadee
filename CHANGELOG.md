@@ -1,8 +1,9 @@
 # Change Log
 
-## [Unreleased]
+## [0.4.3] - 2018-03-07
 ### Fixed
-- Configuration file system path
+- Configuration file system path.
+- Anitya github download call.
 
 ## [0.4.2] - 2017-11-18
 ### Added

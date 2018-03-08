@@ -27,7 +27,7 @@ import configparser
 import logging
 import sys
 
-__version__ = '0.4.3~dev'
+__version__ = '0.4.3'
 
 _my_path = os.path.dirname(os.path.realpath(__file__))
 
