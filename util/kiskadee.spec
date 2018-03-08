@@ -1,6 +1,6 @@
 Name:           kiskadee
 Version:        0.4.3
-Release:        0.4.20171118git5b3c751%{?dist}
+Release:        2%{?dist}
 Summary:        A continuous static analysis system
 
 License:        AGPLv3+
@@ -22,6 +22,7 @@ BuildRequires: python3-marshmallow
 BuildRequires: python3-nose
 BuildRequires: python3-fedmsg
 BuildRequires: python3-alembic
+BuildRequires: python3-debian
 
 BuildRequires: systemd
 %{?systemd_requires}
@@ -41,6 +42,7 @@ Requires: python3-fedmsg
 # BUG: https://bugzilla.redhat.com/show_bug.cgi?id=1114413
 Requires: python3-flask-cors
 Requires: python3-alembic
+Requires: python3-debian
 
 %description
 kiskadee is a system to support static analysis usage during software
@@ -98,6 +100,12 @@ install -p -m 644 util/kiskadee_api.service %{buildroot}%{_unitdir}/kiskadee_api
 %config(noreplace) %{_sysconfdir}/fedmsg.d/anityaconsumer.py*
 
 %changelog
+* Thu Mar 08 2018 Athos Ribeiro <athoscr@fedoraproject.org> - 0.4.3-2
+- Add missing dependency python3-debian
+
+* Wed Mar 07 2018 Athos Ribeiro <athoscr@fedoraproject.org> - 0.4.3-1
+- Update version
+
 * Sat Dec 30 2017 Athos Ribeiro <athoscr@fedoraproject.org> - 0.4.3-0.4.20171118git5b3c751
 - Remove conflicting anitya endpoints config file from fedmsg directory
 
