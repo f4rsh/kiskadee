@@ -4,97 +4,54 @@ by the user that is executing the tests. It also needs selinux running in
 a permissive mode (setenforce 0)
 """
 import unittest
-import tempfile
+import re
+from unittest.mock import MagicMock
 
-from kiskadee.runner import Runner
+import kiskadee.queue
+import kiskadee.runner
+import kiskadee.monitor
 import kiskadee.fetchers.example
-import kiskadee.fetchers.debian
-from sqlalchemy.orm import sessionmaker
-from kiskadee import model
-from kiskadee.queue import Queues
-from kiskadee.database import Database
+import kiskadee.analyzers
 
+class RunnerTestCase(unittest.TestCase):
 
-class AnalyzersTestCase(unittest.TestCase):
+    """Docstring for AnalyzersTestCase. """
+
     def setUp(self):
-        self.engine = Database('db_test').engine
-        Session = sessionmaker(bind=self.engine)
-        self.session = Session()
-        model.Base.metadata.create_all(self.engine)
-        model.Analyzer.create_analyzers(self.session)
-        self.fetcher = kiskadee.fetchers.debian.Fetcher()
-        self.deb_pkg = {'name': 'test',
-                        'version': '1.0.0',
-                        'fetcher': kiskadee.fetchers.debian.__name__
-                        }
-        self.fetcher = model.Fetcher(
-                name='kiskadee-fetcher2', target='university'
-            )
-        self.session.add(self.fetcher)
-        self.session.commit()
-        self.runner = Runner()
-        self.runner.queues = Queues()
+        self.queues = kiskadee.queue.Queues()
+        self.runner = kiskadee.runner.Runner(self.queues)
 
-    def tearDown(self):
-        self.session.close()
-        model.Base.metadata.drop_all()
-
-    def test_run_analyzer(self):
-
-        source_to_analysis = {
-                'name': 'test',
-                'version': '1.0.0',
-                'fetcher': kiskadee.fetchers.example.Fetcher()
-        }
-
-        source_path = self.runner._path_to_uncompressed_source(
-                source_to_analysis, kiskadee.fetchers.example.Fetcher()
-            )
-        firehose_report = self.runner.analyze("cppcheck", source_path)
-        self.assertIsNotNone(firehose_report)
-
-    def test_generate_a_firehose_report(self):
-        source_to_analysis = {
+        self.project = {
                 'name': 'test',
                 'version': '1.0.0',
                 'fetcher': kiskadee.fetchers.example.__name__
         }
 
-        self.runner.call_analyzers(source_to_analysis)
-        analyzed_pkg = self.runner.queues.dequeue_result()
-        self.assertEqual(analyzed_pkg['name'], source_to_analysis['name'])
-        self.assertIn('cppcheck', analyzed_pkg['results'])
-        self.assertIn('flawfinder', analyzed_pkg['results'])
+    def tearDown(self):
+        """TODO: to be defined1. """
 
-    def test_path_to_uncompressed_source(self):
+    def test_run_analyzers(self):
+        self.runner.project = self.project
+        self.runner.call_analyzers()
+        result = self.queues.dequeue_result()
+        self.assertEqual(result['name'], 'test')
+        self.assertIn('results', result)
 
-        source_to_analysis = {
-                'name': 'test',
-                'version': '1.0.0',
-                'fetcher': kiskadee.fetchers.example
-        }
+    def test_run_a_single_analyzer(self):
+        self.runner.project = self.project
+        self.runner.fetcher = self.runner.import_project_fetcher()
+        source_path = self.runner.get_project_code_path()
+        analyzer = self.runner.fetcher.analyzers()[0]
+        self.assertIsNotNone(re.search('.*cppcheck.*', analyzer))
+        self.assertIsNone(re.search('.*pylint.*', analyzer))
 
-        source_path = self.runner._path_to_uncompressed_source(
-                source_to_analysis, kiskadee.fetchers.example.Fetcher()
-        )
-        tmp_path = tempfile.gettempdir()
-        self.assertTrue(source_path.find(tmp_path) >= 0)
-        self.assertIsNotNone(source_path)
-
-    def test_invalid_path_to_uncompressed_source(self):
-
-        source_to_analysis = {
-                'name': 'test',
-                'version': '1.0.0',
-                'fetcher': kiskadee.fetchers.example
-        }
-
-        source_path = self.runner._path_to_uncompressed_source(
-                source_to_analysis, None
-        )
-
-        self.assertIsNone(source_path)
-
+    def test_analysis_an_incoming_monitor_project(self):
+        self.session = MagicMock()
+        self.session.query().filter_by().first = MagicMock(return_value={})
+        self.monitor = kiskadee.monitor.Monitor(self.session, self.queues)
+        self.monitor.send_project_to_runner(self.project)
+        incoming_project = self.runner.queues.dequeue_analysis()
+        self.assertEqual(self.project, incoming_project)
 
 if __name__ == '__main__':
     unittest.main()

@@ -17,6 +17,7 @@ class ApiTestCase(unittest.TestCase):
 
     def setUp(self):
         self.fetcher = kiskadee.model.Fetcher(name='kiskadee-fetcher')
+        self.queues = kiskadee.queue.Queues()
 
     def test_get_fetchers(self):
         kiskadee.api.app.kiskadee_db_session = MagicMock()
@@ -39,15 +40,8 @@ class ApiTestCase(unittest.TestCase):
                 raw='analysis result: foo'
                 )
 
-        def side_effect(klass):
-            mocked_objects = {
-                    'Package': package,
-                    'Version': version,
-                    }
-            return mocked_objects[klass.__name__]
-
         kiskadee.api.app.kiskadee_db_session = MagicMock()
-        Monitor(kiskadee.api.app.kiskadee_db_session())
+        Monitor(kiskadee.api.app.kiskadee_db_session(), self.queues)
         db_session = kiskadee.api.app.kiskadee_db_session()
         db_session.query(kiskadee.model.Package)\
                   .filter_by().id = MagicMock()

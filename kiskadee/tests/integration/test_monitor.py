@@ -27,7 +27,6 @@ class MonitorTestCase(unittest.TestCase):
 
         queues = Queues()
         self.monitor = Monitor(self.session, queues)
-
         self.session.query = MagicMock(side_effect=mocked_models)
 
         self.data1 = {

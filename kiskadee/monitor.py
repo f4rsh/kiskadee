@@ -23,6 +23,7 @@ class Monitor:
         """Return a non initialized Monitor."""
         self.session = _session
         self.queues = queues
+        kiskadee.model.Analyzer.create_analyzers(self.session)
 
     def start(self):
         kiskadee.logger.debug('Monitor PID: {}'.format(os.getpid()))
@@ -96,7 +97,7 @@ def daemon():
     queues = kiskadee.queue.Queues()
     session = kiskadee.database.Database().session
     monitor = Monitor(session, queues)
-    runner = Runner(session, queues)
+    runner = Runner(queues)
     monitor_process = Process(
             target=monitor.start,
         )
