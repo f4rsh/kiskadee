@@ -14,13 +14,13 @@ kiskadee = Flask(__name__)
 
 CORS(kiskadee)
 
+db = Database()
 
 @kiskadee.route('/fetchers')
 def index():
     """Get the list of available fetchers."""
     if request.method == 'GET':
-        db_session = kiskadee_db_session()
-        fetchers = db_session.query(Fetcher).all()
+        fetchers = db.session.query(Fetcher).all()
         fetcher_schema = FetcherSchema(many=True)
         result = fetcher_schema.dump(fetchers)
         return jsonify({'fetchers': result.data})
@@ -30,8 +30,7 @@ def index():
 def packages():
     """Get the list of analyzed packages."""
     if request.method == 'GET':
-        db_session = kiskadee_db_session()
-        packages = db_session.query(Package).all()
+        packages = db.session.query(Package).all()
         package_schema = PackageSchema(
             many=True,
             exclude=['versions.analysis', 'versions.package_id']
@@ -42,16 +41,14 @@ def packages():
 
 @kiskadee.route('/analysis/<pkg_name>/<version>', methods=['GET'])
 def package_analysis_overview(pkg_name, version):
-    """Get the a analysis list of some package version."""
-    db_session = kiskadee_db_session()
+    """Get a analysis list of some package version."""
 
     #TODO: This can be a simple inner join between package, version and analysis
-    package_id = db_session.query(Package).filter_by(name = pkg_name).id
-    version_id = db_session.query(Version)\
-            .filter(Version.number == version)\
-            .filter(Version.package_id == package_id).first().id
+    _package_id = db.filter_by_name(Package, pkg_name).id
+    version_id = db.session.query(Version)\
+            .filter_by(number = version, package_id = _package_id ).first().id
     analysis = (
-            db_session.query(Analysis)
+            db.session.query(Analysis)
             .options(
                 eagerload(Analysis.analyzers, innerjoin=True)
             )
@@ -69,8 +66,7 @@ def package_analysis_overview(pkg_name, version):
 )
 def analysis_results(pkg_name, version, analysis_id):
     """Get the analysis results from a specific analyzer."""
-    db_session = kiskadee_db_session()
-    analysis = db_session.query(Analysis).get(analysis_id)
+    analysis = db.get(Analysis, analysis_id)
     analysis_schema = AnalysisSchema(only=['raw'])
     data, errors = analysis_schema.dump(analysis)
     response = data['raw']['results']
@@ -83,8 +79,7 @@ def analysis_results(pkg_name, version, analysis_id):
 )
 def analysis_reports(pkg_name, version, analysis_id):
     """Get the analysis reports from a specific analyzer."""
-    db_session = kiskadee_db_session()
-    analysis = db_session.query(Analysis).get(analysis_id)
+    analysis = db.get(Analysis, analysis_id)
     data, errors = AnalysisSchema(only=['report']).dump(analysis)
     report = data['report']
     try:
@@ -92,11 +87,6 @@ def analysis_reports(pkg_name, version, analysis_id):
         return jsonify({'analysis_report': report})
     except Exception as err:
         return jsonify({'analysis_report': {}})
-
-
-def kiskadee_db_session():
-    """Return a kiskadee database session."""
-    return Database().session
 
 def main():
     """Initialize the kiskadee API."""

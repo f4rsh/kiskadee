@@ -31,7 +31,7 @@ class Package(Base):
             )
 
     @staticmethod
-    def save(session, data):
+    def save(db, data):
         homepage = None
         if ('meta' in data) and ('homepage' in data['meta']):
             homepage = data['meta']['homepage']
@@ -41,16 +41,16 @@ class Package(Base):
                 homepage=homepage,
                 fetcher_id=data['fetcher_id']
                 )
-        session.add(_package)
-        session.commit()
+        db.session.add(_package)
+        db.session.commit()
         _version = Version(number=data['version'],
                            package_id=_package.id)
-        session.add(_version)
-        session.commit()
+        db.session.add(_version)
+        db.session.commit()
         return _package
 
     @staticmethod
-    def update(session, project, data):
+    def update(db, project, data):
 
         if(project.versions[-1].number == data['version']):
             return project
@@ -60,8 +60,8 @@ class Package(Base):
                     project_id=project.id
                     )
             project.versions.append(_new_version)
-            session.add(project)
-            session.commit()
+            db.session.add(project)
+            db.session.commit()
             kiskadee.logger.debug(
                     "MONITOR: Sending project {}_{}"
                     "for analysis".format(data['name'], data['version'])
@@ -109,7 +109,7 @@ class Analyzer(Base):
     analysis = orm.relationship('Analysis', backref='analyzers')
 
     @staticmethod
-    def create_analyzers(_session):
+    def create_analyzers(db):
         """Create the analyzers on database.
 
         The kiskadee analyzers are defined on the section `analyzers` of the
@@ -118,13 +118,13 @@ class Analyzer(Base):
         """
         list_of_analyzers = dict(kiskadee.config._sections["analyzers"])
         for _name, _version in list_of_analyzers.items():
-            if not _session.query(Analyzer)\
+            if not db.session.query(Analyzer)\
                             .filter_by(name = _name, version = _version )\
                             .first():
                 new_analyzer = kiskadee.model.Analyzer(name = _name,
                                                        version = _version)
-                _session.add(new_analyzer)
-        _session.commit()
+                db.session.add(new_analyzer)
+        db.session.commit()
 
 class Analysis(Base):
     """Abstraction of a package analysis."""
@@ -139,21 +139,21 @@ class Analysis(Base):
                               uselist=False, back_populates='analysis')
 
     @staticmethod
-    def save(session, data, analyzer, result, version):
+    def save(db, data, analyzer, result, version):
         _analysis = kiskadee.model.Analysis()
         try:
-            _analyzer = session.query(kiskadee.model.Analyzer).\
+            _analyzer = db.session.query(kiskadee.model.Analyzer).\
                     filter_by(name = analyzer).first()
             _analysis.analyzer_id = _analyzer.id
             _analysis.version_id = version.id
             _analysis.raw = json.loads(result)
-            session.add(_analysis)
-            session.commit()
+            db.session.add(_analysis)
+            db.session.commit()
             dict_analysis = {
                     'results': _analysis.raw['results'],
                     'id': _analysis.id
                 }
-            Report.save(session, dict_analysis, data, _analyzer.name)
+            Report.save(db, dict_analysis, data, _analyzer.name)
             kiskadee.logger.debug(
                     "MONITOR: Saved analysis done by {} for package: {}-{}"
                     .format(analyzer, data["name"], data["version"])
@@ -184,7 +184,7 @@ class Report(Base):
     analysis = orm.relationship('Analysis', back_populates='report')
 
     @staticmethod
-    def save(session, analysis, data, analyzer_name):
+    def save(db, analysis, data, analyzer_name):
         try:
             results = analysis['results']
             analyzer_report = Report.REPORTERS[analyzer_name](results)
@@ -194,8 +194,8 @@ class Report(Base):
                     ._compute_reports(analyzer_name)
                 )
             _reports.analysis_id = analysis['id']
-            session.add(_reports)
-            session.commit()
+            db.session.add(_reports)
+            db.session.commit()
             kiskadee.logger.debug(
                     "MONITOR: Saved analysis reports for {} package"
                     .format(data["name"])

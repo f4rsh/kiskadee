@@ -1,16 +1,13 @@
 import unittest
 from unittest.mock import MagicMock
-from sqlalchemy.orm import sessionmaker
 
-from kiskadee import model
 from kiskadee.monitor import Monitor
 from kiskadee.queue import Queues
-from kiskadee.model import Package, Analyzer, Report, Analysis, Fetcher
+from kiskadee.model import Package, Fetcher
 import kiskadee.queue
 import kiskadee.fetchers.debian
 import kiskadee.fetchers.anitya
 import kiskadee.fetchers.example
-from kiskadee.database import Database
 
 
 class MonitorTestCase(unittest.TestCase):
@@ -23,11 +20,10 @@ class MonitorTestCase(unittest.TestCase):
             klass()
 
         self.example_fetcher = kiskadee.fetchers.example.Fetcher()
-        self.session = MagicMock()
+        self.db = MagicMock()
 
         queues = Queues()
-        self.monitor = Monitor(self.session, queues)
-        self.session.query = MagicMock(side_effect=mocked_models)
+        self.monitor = Monitor(self.db, queues)
 
         self.data1 = {
                 'name': 'curl',
@@ -60,9 +56,8 @@ class MonitorTestCase(unittest.TestCase):
         self.assertIn("fetcher", second_monitored_project)
 
     def test_send_project_to_runner(self):
-        fetcher = kiskadee.model.Fetcher(name='example')
-        project = kiskadee.model.Package(name='project1',
-                fetcher_id=fetcher.id)
+        fetcher = Fetcher(name='example')
+        Package(name='project1', fetcher_id=fetcher.id)
         self.monitor.get_fetcher_and_project = MagicMock(
                 return_value=[fetcher, {}]
                 )
@@ -70,8 +65,7 @@ class MonitorTestCase(unittest.TestCase):
                 return_value=True
                 )
         self.monitor.send_project_to_runner(self.data1)
-        self.assertEqual(self.monitor.queues.dequeue_analysis(),
-                self.data1)
+        self.assertEqual(self.monitor.queues.dequeue_analysis(), self.data1)
 
         if __name__ == '__main__':
             unittest.main()

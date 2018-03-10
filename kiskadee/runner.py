@@ -22,7 +22,7 @@ class Runner:
         self.fetcher = None
         self.project = None
 
-    def runner(self, queues):
+    def runner(self):
         """Run static analyzers.
 
         Continuously dequeue packages from `analyses_queue` and call the

@@ -3,9 +3,9 @@ import unittest
 from unittest.mock import MagicMock
 
 import kiskadee
-from kiskadee.monitor import Monitor
 import kiskadee.api.app
 import kiskadee.fetchers.example
+import kiskadee.database
 
 
 class ApiTestCase(unittest.TestCase):
@@ -14,16 +14,14 @@ class ApiTestCase(unittest.TestCase):
     def setUpClass(cls):
         kiskadee.api.app.kiskadee.testing = True
         cls.app = kiskadee.api.app.kiskadee.test_client()
+        cls.db = kiskadee.api.app.db = MagicMock()
 
     def setUp(self):
         self.fetcher = kiskadee.model.Fetcher(name='kiskadee-fetcher')
         self.queues = kiskadee.queue.Queues()
 
     def test_get_fetchers(self):
-        kiskadee.api.app.kiskadee_db_session = MagicMock()
-        kiskadee.api.app.kiskadee_db_session().query().all = MagicMock(
-                return_value=[self.fetcher]
-                )
+        self.db.session.query().all = MagicMock(return_value=[self.fetcher])
         response = self.app.get("/fetchers")
         response_data = json.loads(response.data.decode("utf-8"))
         self.assertIn("fetchers", response_data)
@@ -33,23 +31,18 @@ class ApiTestCase(unittest.TestCase):
             )
 
     def test_get_analysis_as_json(self):
-        package = kiskadee.model.Package(name='mocked-package', id=1)
-        version = kiskadee.model.Version(number='1.0.0', id=1, package_id=1)
         analysis = kiskadee.model.Analysis(
                 id=1, analyzer_id=1, version_id=1,
                 raw='analysis result: foo'
                 )
 
-        kiskadee.api.app.kiskadee_db_session = MagicMock()
-        Monitor(kiskadee.api.app.kiskadee_db_session(), self.queues)
-        db_session = kiskadee.api.app.kiskadee_db_session()
-        db_session.query(kiskadee.model.Package)\
-                  .filter_by().id = MagicMock()
-
-        db_session.query(kiskadee.model.Version)\
-                  .filter_by().id = MagicMock()
-        db_session.query().options()\
-                  .filter().all = MagicMock(return_value=[analysis])
+        self.db.filter_by_name = MagicMock()
+        self.db.session.query(kiskadee.model.Package)\
+            .filter_by().id = MagicMock()
+        self.db.session.query(kiskadee.model.Version)\
+            .filter_by().id = MagicMock()
+        self.db.session.query().options()\
+            .filter().all = MagicMock(return_value=[analysis])
 
         response = self.app.get("/analysis/mocked-package/1.0.0")
         response_data = json.loads(response.data.decode("utf-8"))
@@ -61,10 +54,7 @@ class ApiTestCase(unittest.TestCase):
                 id=1, analyzer_id=1, version_id=1,
                 raw={'results': 'first analysis results'}
                 )
-
-        kiskadee.api.app.kiskadee_db_session().query().get = MagicMock(
-                return_value=analysis
-                )
+        self.db.get = MagicMock(return_value=analysis)
         response = self.app.get("/analysis/kiskadee-package/7.23/1/results")
         response_data = json.loads(response.data.decode("utf-8"))
         self.assertIn("analysis_results", response_data)

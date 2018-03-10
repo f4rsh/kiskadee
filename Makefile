@@ -2,22 +2,22 @@
 SHELL:=/bin/bash
 
 help:
-	@printf "Available targets: check, analyzers, clean\n\n"
+	@printf "Available targets: test, analyzers, clean\n\n"
 
-check:
+test:
 	coverage run --omit="lib/*","setup.py","kiskadee/tests/*",".eggs/*",".venv/*","/usr/*" -m unittest kiskadee/tests/*/*.py
 	coverage html
 
-check_units:
+test_units:
 	python3 -m unittest kiskadee/tests/units/*.py
 
-check_integration:
+test_integration:
 	python3 -m unittest kiskadee/tests/integration/*.py
 
-check_api:
+test_api:
 	python3 -m unittest kiskadee/tests/api/*.py
 
-check_plugins:
+test_plugins:
 	python3 -m unittest kiskadee/tests/plugins/*.py
 
 analyzers:

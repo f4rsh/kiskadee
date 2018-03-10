@@ -19,11 +19,11 @@ RUNNING = True
 class Monitor:
     """Provide kiskadee monitoring objects."""
 
-    def __init__(self, _session, queues):
+    def __init__(self, db, queues):
         """Return a non initialized Monitor."""
-        self.session = _session
+        self.db = db
         self.queues = queues
-        kiskadee.model.Analyzer.create_analyzers(self.session)
+        kiskadee.model.Analyzer.create_analyzers(self.db)
 
     def start(self):
         kiskadee.logger.debug('Monitor PID: {}'.format(os.getpid()))
@@ -56,8 +56,8 @@ class Monitor:
     def get_fetcher_and_project(self, data):
         fetcher_name = data['fetcher'].split('.')[-1]
         project_name = data['name']
-        fetcher = self._query(Fetcher).filter_by(name = fetcher_name).first()
-        project = self._query(Package).filter_by(name = project_name).first()
+        fetcher = self.db.filter_by_name(Fetcher, fetcher_name)
+        project = self.db.filter_by_name(Package, project_name)
         return fetcher, project
 
     def is_a_new_project_version(self, project, data):
@@ -69,17 +69,14 @@ class Monitor:
     def save_analyzed_project(self, data):
         if not data:
             return {}
-        project = self._query(Package).filter_by(name = data['name']).first()
+        project = self.db.filter_by_name(Package, data['name'])
         if not project:
-            project = Package.save(self.session, data)
+            project = Package.save(self.db, data)
         if project:
-            project = Package.update(self.session, project, data)
+            project = Package.update(self.db, project, data)
 
         for analyzer, result in data['results'].items():
-            Analysis.save(self.session, data, analyzer, result, project.versions[-1])
-
-    def _query(self, arg):
-        return self.session.query(arg)
+            Analysis.save(self.db, data, analyzer, result, project.versions[-1])
 
 
     @staticmethod
@@ -95,8 +92,8 @@ def daemon():
     """Entry point to the monitor module."""
     # TODO: improve with start/stop system
     queues = kiskadee.queue.Queues()
-    session = kiskadee.database.Database().session
-    monitor = Monitor(session, queues)
+    db = kiskadee.database.Database()
+    monitor = Monitor(db, queues)
     runner = Runner(queues)
     monitor_process = Process(
             target=monitor.start,

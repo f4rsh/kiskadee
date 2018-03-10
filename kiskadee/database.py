@@ -1,9 +1,10 @@
 """Provide kiskadee Database operations."""
 
-import kiskadee
-from kiskadee.model import Base
 from sqlalchemy import create_engine, orm
 
+import kiskadee
+from kiskadee.model import Base
+from kiskadee.model import Package, Fetcher, Version, Report, Analysis
 
 class Database:
     """kiskadee Database class."""
@@ -22,6 +23,11 @@ class Database:
         DBSession = orm.sessionmaker(bind=engine)
         return DBSession()
 
+    def filter_by_name(self, model, _name):
+        return self.session.query(model).filter_by(name = _name).first()
+
+    def get(self, model, id):
+        return self.session.query(model).get(id)
 
 def get_database_uri(db):
     """Return the Database URI of the current session."""
