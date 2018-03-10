@@ -6,7 +6,9 @@ pipeline {
     stage('Create Virtualenv') {
       steps {
         sh 'virtualenv -p /usr/bin/python3 .'
-	sh 'source bin/activate && pip install -e .'
+	      sh 'source bin/activate && pip install -e .'
+	      sh "source bin/activate && pip install fedmsg[consumers]"
+	      sh "source bin/activate && pip install -r test_requirements.txt"
       }
     }
 
@@ -18,7 +20,7 @@ pipeline {
 
     stage('Run Tests') {
       steps {
-        sh "source bin/activate && pip install coverage && make check"
+        sh "source bin/activate && make test"
       }
 	post {
 		success {
