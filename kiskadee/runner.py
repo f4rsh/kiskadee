@@ -22,7 +22,7 @@ class Runner:
         self.fetcher = None
         self.project = None
 
-    def runner(self):
+    def run(self):
         """Run static analyzers.
 
         Continuously dequeue packages from `analyses_queue` and call the
@@ -56,7 +56,7 @@ class Runner:
         return self.project
 
 
-    def clean_temporary_directory(self, temp_dir):
+    def rmdtemp(self, temp_dir):
         # not delete the source code used on tests.
         if not temp_dir.find("kiskadee/tests") > -1:
             shutil.rmtree(temp_dir)
@@ -78,7 +78,7 @@ class Runner:
                 analyzers, source_path
                 )
         self.enqueue_analysis_to_monitor(analysis_result)
-        self.clean_temporary_directory(source_path)
+        self.rmdtemp(source_path)
 
     def enqueue_analysis_to_monitor(self, analysis_result):
         if analysis_result['results']:
@@ -121,7 +121,7 @@ class Runner:
             uncompressed_source_path = self.uncompress_project_code(
                     compressed_source_path
                     )
-            self.clean_temporary_directory(os.path.dirname(compressed_source_path))
+            self.rmdtemp(os.path.dirname(compressed_source_path))
             return uncompressed_source_path
         else:
             kiskadee.logger.debug('RUNNER: invalid compressed source')

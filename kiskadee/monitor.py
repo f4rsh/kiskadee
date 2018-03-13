@@ -4,15 +4,12 @@ kiskadee monitors repositories checking for new project versions to be
 analyzed. This module provides such capabilities.
 """
 import threading
-from multiprocessing import Process
 import time
 import os
 import importlib
 
-import kiskadee.database
-from kiskadee.runner import Runner
-import kiskadee.queue
-from kiskadee.model import Package, Fetcher, Version, Report, Analysis
+import kiskadee
+from kiskadee.model import Package, Fetcher, Version, Report, Analysis, Analyzer
 
 RUNNING = True
 
@@ -23,9 +20,9 @@ class Monitor:
         """Return a non initialized Monitor."""
         self.db = db
         self.queues = queues
-        kiskadee.model.Analyzer.create_analyzers(self.db)
+        Analyzer.create_analyzers(self.db)
 
-    def start(self):
+    def run(self):
         kiskadee.logger.debug('Monitor PID: {}'.format(os.getpid()))
 
         for fetcher in kiskadee.load_fetchers():
@@ -86,21 +83,3 @@ class Monitor:
         module_as_a_thread.start()
         if joinable or timeout:
             module_as_a_thread.join(timeout)
-
-
-def daemon():
-    """Entry point to the monitor module."""
-    # TODO: improve with start/stop system
-    queues = kiskadee.queue.Queues()
-    db = kiskadee.database.Database()
-    monitor = Monitor(db, queues)
-    runner = Runner(queues)
-    monitor_process = Process(
-            target=monitor.start,
-        )
-    runner_process = Process(
-            target=runner.runner,
-        )
-    monitor_process.start()
-    runner_process.start()
-    runner_process.join()

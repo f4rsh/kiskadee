@@ -44,7 +44,7 @@ setup(
     packages=find_packages(),
     include_package_data=False,
     entry_points={'console_scripts': [
-            'kiskadee = kiskadee.monitor:daemon',
+        'kiskadee = kiskadee.initializer:init',
             'kiskadee_api = kiskadee.api.app:main',],
             'moksha.consumer': (
                 'anityaconsumer = kiskadee.fetchers.anitya:AnityaConsumer')},
