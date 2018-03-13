@@ -1,4 +1,4 @@
-"""Run each static analyzer in each package marked for analysis."""
+"""Run each static analyzer in each project marked for analysis."""
 
 import shutil
 import tempfile
@@ -25,14 +25,13 @@ class Runner:
     def run(self):
         """Run static analyzers.
 
-        Continuously dequeue packages from `analyses_queue` and call the
-        :func:`analyze` method, passing the dequeued package.
-        After the analysis, updates the status of this package on the database.
+        Continuously dequeue projects from `analyses_queue` and call the
+        :func:`analyze` method, passing the dequeued project as argument.
+        After the analysis, send the result back to monitor.
         """
-        kiskadee.logger.debug('Runner PID: {}'.format(os.getpid()))
+        kiskadee.logger.debug('RUNNER PID: {}'.format(os.getpid()))
         while RUNNING:
-            kiskadee.logger.debug('RUNNER: Waiting to dequeue'\
-                                  ' project to analysis...')
+            kiskadee.logger.debug('RUNNER STATE: Idle.')
             self.project = self.queues.dequeue_analysis()
             self.call_analyzers()
 
@@ -42,8 +41,8 @@ class Runner:
                     self.project['fetcher']
                     ).Fetcher()
         except ModuleNotFoundError:
-            kiskadee.logger.debug("Fetcher {} could not be loaded"\
-                    .format(self.project['fetcher'])
+            kiskadee.logger.debug("RUNNER STATE: Fetcher {}\
+                    could not be loaded".format(self.project['fetcher'])
                 )
             return {}
 
@@ -95,19 +94,20 @@ class Runner:
         if source_path is None:
             return None
 
-        kiskadee.logger.debug('ANALYSIS: running {} ...'.format(analyzer))
+        kiskadee.logger.debug('RUNNER STATE: analysing with {} ...'\
+                .format(analyzer))
         try:
             analysis = kiskadee.analyzers.run(analyzer, source_path)
             firehose_report = kiskadee.converter.to_firehose(
                     analysis, analyzer
                 )
             kiskadee.logger.debug(
-                    'ANALYSIS: DONE {} analysis'
+                    'RUNNER STATE: DONE {} analysis'
                     .format(analyzer)
                 )
             return firehose_report
         except Exception as err:
-            kiskadee.logger.debug('RUNNER: could not generate analysis')
+            kiskadee.logger.debug('RUNNER STATE: could not generate analysis')
             kiskadee.logger.debug(err)
             return None
 
@@ -134,7 +134,8 @@ class Runner:
                     dir_to_unpack_source)
             return dir_to_unpack_source
         except Exception as err:
-            kiskadee.logger.debug('Could not unpack project source')
+            kiskadee.logger.debug('RUNNER STATE: Could not unpack'\
+                    'project source')
             kiskadee.logger.debug(err)
             return {}
 

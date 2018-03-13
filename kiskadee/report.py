@@ -36,7 +36,6 @@ class CppcheckReport(Report):
 
     def _compute_reports(self, analyzer):
         """Compute every report type for cppcheck analyzer."""
-        print(analyzer)
         result_dict = {
                 'warning': 0,
                 'error': 0,

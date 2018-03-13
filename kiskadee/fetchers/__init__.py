@@ -49,12 +49,8 @@ class Fetcher(abc.ABC):
         if not project:
             raise NotImplementedError('fetcher must call parent watch method ')
 
-        kiskadee.queue.Queues().enqueue_project(project)
-        fetcher = project['fetcher']
-        kiskadee.logger.debug(
-                "{} fetcher: sending package {}_{} for monitor"
-                .format(fetcher, project['name'], project['version'])
-            )
+        fetcher = project['fetcher'].split('.')[-1]
+        kiskadee.queue.Queues().enqueue_project(project, fetcher)
 
     @abc.abstractmethod
     def compare_versions(self, new, old):

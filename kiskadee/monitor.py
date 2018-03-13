@@ -23,20 +23,20 @@ class Monitor:
         Analyzer.create_analyzers(self.db)
 
     def run(self):
-        kiskadee.logger.debug('Monitor PID: {}'.format(os.getpid()))
+        kiskadee.logger.debug('MONITOR PID: {}'.format(os.getpid()))
 
         for fetcher in kiskadee.load_fetchers():
             thread = Monitor._start_fetcher(fetcher.Fetcher().watch)
 
         while RUNNING:
+            kiskadee.logger.debug('MONITOR STATE: Idle'.format(os.getpid()))
             new_project = self.dequeue_project_from_fetchers()
             self.send_project_to_runner(new_project)
             analyzed_project = self.dequeue_analysis_from_runner()
             self.save_analyzed_project(analyzed_project)
 
     def dequeue_project_from_fetchers(self):
-        new_project = self.queues.dequeue_project()
-        return new_project if new_project else {}
+        return self.queues.dequeue_project()
 
     def dequeue_analysis_from_runner(self):
         return self.queues.dequeue_result()
@@ -45,10 +45,12 @@ class Monitor:
         if data:
             fetcher, project = self.get_fetcher_and_project(data)
             data["fetcher_id"] = fetcher.id if fetcher else ''
-            if not project:
-                self.queues.enqueue_analysis(data)
-            elif self.is_a_new_project_version(project, data):
-                self.queues.enqueue_analysis(data)
+            if not self.is_a_new_project_version(project, data):
+                kiskadee.logger.debug('MONITOR STATE: Project {} already'\
+                        'analyzed'.format(data['name']))
+                return
+            self.queues.enqueue_analysis(data)
+
 
     def get_fetcher_and_project(self, data):
         fetcher_name = data['fetcher'].split('.')[-1]
@@ -58,10 +60,13 @@ class Monitor:
         return fetcher, project
 
     def is_a_new_project_version(self, project, data):
-        project_version = data['version']
-        analysed_version = project.versions[-1].number
-        fetcher = importlib.import_module(data['fetcher']).Fetcher()
-        fetcher.compare_versions(project_version, analysed_version)
+        if project:
+            project_version = data['version']
+            analysed_version = project.versions[-1].number
+            fetcher = importlib.import_module(data['fetcher']).Fetcher()
+            return fetcher.compare_versions(project_version, analysed_version)
+        else:
+            return True
 
     def save_analyzed_project(self, data):
         if not data:
