@@ -1,7 +1,7 @@
 """Provide objects to serialize the kiskadee models."""
 
 from marshmallow import Schema, fields
-from kiskadee.model import Package, Fetcher, Analysis, Version,\
+from kiskadee.model import Project, Fetcher, Analysis, Version,\
         Report, Analyzer
 
 
@@ -49,7 +49,7 @@ class AnalysisSchema(Schema):
 
 
 class VersionSchema(Schema):
-    """Provide a serializer to the Package model."""
+    """Provide a serializer to the Project model."""
 
     id = fields.Int()
     number = fields.Str()
@@ -57,7 +57,7 @@ class VersionSchema(Schema):
     analysis = fields.Nested(AnalysisSchema, many=True)
 
     def make_object(self, data):
-        """Serialize a Package object."""
+        """Serialize a Project object."""
         print('MAKING OBJECT FROM', data)
         return Version(**data)
 
@@ -76,8 +76,8 @@ class FetcherSchema(Schema):
         return Fetcher(**data)
 
 
-class PackageSchema(Schema):
-    """Provide a serializer to the Package model."""
+class ProjectSchema(Schema):
+    """Provide a serializer to the Project model."""
 
     id = fields.Int()
     name = fields.Str()
@@ -85,6 +85,6 @@ class PackageSchema(Schema):
     versions = fields.Nested(VersionSchema, many=True)
 
     def make_object(self, data):
-        """Serialize a Package object."""
+        """Serialize a Project object."""
         print('MAKING OBJECT FROM', data)
-        return Package(**data)
+        return Project(**data)

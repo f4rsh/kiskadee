@@ -1,4 +1,4 @@
-"""Fetcher to monitor Debian Project Packages."""
+"""Fetcher to monitor Debian Packages."""
 
 import os
 import tempfile
@@ -16,14 +16,14 @@ RUNNING = True
 
 
 class Fetcher(kiskadee.fetchers.Fetcher):
-    """Fetcher to monitor Debian Project Packages."""
+    """Fetcher to monitor Debian Packages."""
 
     def watch(self):
         """Start the monitoring process for Debian Repositories.
 
-        Each project monitored by the fetcher will be
+        Each package monitored by the fetcher will be
         queued by calling the watch parent method,
-        passing the project data as argument.
+        passing it as argument.
         """
         kiskadee.logger.debug("Starting Debian fetcher")
         while RUNNING:
@@ -74,10 +74,10 @@ class Fetcher(kiskadee.fetchers.Fetcher):
         sources = os.path.join(path, 'Sources')
         with open(sources) as sources_file:
             for src in Sources.iter_paragraphs(sources_file):
-                project = self.project_to_enqueue(src)
-                super().watch(**project)
+                package = self.package_to_enqueue(src)
+                super().watch(**package)
 
-    def project_to_enqueue(self, src):
+    def package_to_enqueue(self, src):
         return {'name': src["Package"],
                 'version': self._parse_version(src["Version"]),
                 'fetcher': __name__,

@@ -11,21 +11,21 @@ from kiskadee.report import CppcheckReport, FlawfinderReport
 Base = declarative_base()
 
 
-class Package(Base):
-    """Software packages abstraction.
+class Project(Base):
+    """Software projects abstraction.
 
-    A software package is the source code for a software project. It may be
+    A project is the source code stored on some repository. It may be
     upstream's distribution or the sources provided by some other source, like
     a linux distribution.
     """
 
-    __tablename__ = 'packages'
+    __tablename__ = 'projects'
     id = Column(Integer,
-                Sequence('packages_id_seq', optional=True), primary_key=True)
+                Sequence('projects_id_seq', optional=True), primary_key=True)
     name = Column(Unicode(255), nullable=False)
     homepage = Column(Unicode(255), nullable=True)
     fetcher_id = Column(Integer, ForeignKey('fetchers.id'), nullable=False)
-    versions = orm.relationship('Version', backref='packages')
+    versions = orm.relationship('Version', backref='projects')
     __table_args__ = (
             UniqueConstraint('name', 'fetcher_id'),
             )
@@ -36,18 +36,18 @@ class Package(Base):
         if ('meta' in data) and ('homepage' in data['meta']):
             homepage = data['meta']['homepage']
 
-        _package = Package(
+        _project = Project(
                 name=data['name'],
                 homepage=homepage,
                 fetcher_id=data['fetcher_id']
                 )
-        db.session.add(_package)
+        db.session.add(_project)
         db.session.commit()
         _version = Version(number=data['version'],
-                           package_id=_package.id)
+                           project_id=_project.id)
         db.session.add(_version)
         db.session.commit()
-        return _package
+        return _project
 
     @staticmethod
     def update(db, project, data):
@@ -81,20 +81,20 @@ class Fetcher(Base):
     name = Column(Unicode(255), nullable=False, unique=True)
     target = Column(Unicode(255), nullable=True)
     description = Column(UnicodeText)
-    packages = orm.relationship('Package', backref='fetchers')
+    projects = orm.relationship('Project', backref='fetchers')
 
 
 class Version(Base):
-    """Abstraction of a package version."""
+    """Abstraction of a project version."""
 
     __tablename__ = 'versions'
     id = Column(Integer,
                 Sequence('versions_id_seq', optional=True), primary_key=True)
     number = Column(Unicode(100), nullable=False)
-    package_id = Column(Integer, ForeignKey('packages.id'), nullable=False)
+    project_id = Column(Integer, ForeignKey('projects.id'), nullable=False)
     analysis = orm.relationship('Analysis', backref='versions')
     __table_args__ = (
-            UniqueConstraint('number', 'package_id'),
+            UniqueConstraint('number', 'project_id'),
             )
 
 
@@ -127,7 +127,7 @@ class Analyzer(Base):
         db.session.commit()
 
 class Analysis(Base):
-    """Abstraction of a package analysis."""
+    """Abstraction of a project analysis."""
 
     __tablename__ = 'analysis'
     id = Column(Integer,
@@ -155,7 +155,7 @@ class Analysis(Base):
                 }
             Report.save(db, dict_analysis, data, _analyzer.name)
             kiskadee.logger.debug(
-                    "MONITOR: Saved analysis done by {} for package: {}-{}"
+                    "MONITOR: Saved analysis done by {} for project: {}-{}"
                     .format(analyzer, data["name"], data["version"])
                 )
             return
@@ -197,7 +197,7 @@ class Report(Base):
             db.session.add(_reports)
             db.session.commit()
             kiskadee.logger.debug(
-                    "MONITOR: Saved analysis reports for {} package"
+                    "MONITOR: Saved analysis reports for {} project"
                     .format(data["name"])
                 )
         except KeyError as key:
@@ -208,7 +208,7 @@ class Report(Base):
                 )
         except Exception as err:
             kiskadee.logger.debug(
-                    "MONITOR: Failed to get analysis reports to {} package"
+                    "MONITOR: Failed to get analysis reports to {} project"
                     .format(data["name"])
                 )
             kiskadee.logger.debug(err)

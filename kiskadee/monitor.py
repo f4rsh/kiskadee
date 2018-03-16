@@ -9,7 +9,7 @@ import os
 import importlib
 
 import kiskadee
-from kiskadee.model import Package, Fetcher, Version, Report, Analysis, Analyzer
+from kiskadee.model import Project, Fetcher, Version, Report, Analysis, Analyzer
 
 RUNNING = True
 
@@ -56,7 +56,7 @@ class Monitor:
         fetcher_name = data['fetcher'].split('.')[-1]
         project_name = data['name']
         fetcher = self.db.filter_by_name(Fetcher, fetcher_name)
-        project = self.db.filter_by_name(Package, project_name)
+        project = self.db.filter_by_name(Project, project_name)
         return fetcher, project
 
     def is_a_new_project_version(self, project, data):
@@ -71,11 +71,11 @@ class Monitor:
     def save_analyzed_project(self, data):
         if not data:
             return {}
-        project = self.db.filter_by_name(Package, data['name'])
+        project = self.db.filter_by_name(Project, data['name'])
         if not project:
-            project = Package.save(self.db, data)
+            project = Project.save(self.db, data)
         if project:
-            project = Package.update(self.db, project, data)
+            project = Project.update(self.db, project, data)
 
         for analyzer, result in data['results'].items():
             Analysis.save(self.db, data, analyzer, result, project.versions[-1])

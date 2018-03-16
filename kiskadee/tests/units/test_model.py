@@ -14,7 +14,7 @@ class ModelTestCase(unittest.TestCase):
 
     def setUp(self):
         kiskadee.tests.clean_test_db(self.db, model.Base.metadata)
-        self.package = model.Package(name='python-kiskadee')
+        self.package = model.Project(name='python-kiskadee')
         self.version = model.Version(number='1.0-rc1')
         self.fetcher = model.Fetcher(
               name='kiskadee-fetcher', target='university'
@@ -44,7 +44,7 @@ class ModelTestCase(unittest.TestCase):
         self.assertEqual(fetchers, [self.fetcher])
 
     def test_query_package(self):
-        packages = self.db.session.query(model.Package).all()
+        packages = self.db.session.query(model.Project).all()
         self.assertEqual(packages, [self.package])
 
     def test_query_version(self):
@@ -76,14 +76,14 @@ class ModelTestCase(unittest.TestCase):
             self.db.session.commit()
 
     def test_add_package_without_fetcher(self):
-        package = model.Package(name='foo-bar')
+        package = model.Project(name='foo-bar')
         self.db.session.add(package)
         with self.assertRaises(exc.IntegrityError):
             self.db.session.commit()
 
     def test_unique_package_in_fetcher(self):
-        package_1 = model.Package(name='foo-bar')
-        package_2 = model.Package(name='foo-bar')
+        package_1 = model.Project(name='foo-bar')
+        package_2 = model.Project(name='foo-bar')
         self.fetcher.packages.append(package_1)
         self.fetcher.packages.append(package_2)
         with self.assertRaises(exc.IntegrityError):
@@ -100,7 +100,7 @@ class ModelTestCase(unittest.TestCase):
     def test_compose_kiskadee_source(self):
         _analyzer = self.db.session.query(model.Analyzer)\
                     .filter(model.Analyzer.name == "cppcheck").first()
-        package = model.Package(
+        package = model.Project(
                 name='bla',
                 fetcher_id=self.fetcher.id
                 )
@@ -132,7 +132,7 @@ class ModelTestCase(unittest.TestCase):
                 .filter(model.Analyzer.name == "flawfinder").first()
                 )
 
-        package = model.Package(
+        package = model.Project(
                 name='bla',
                 fetcher_id=self.fetcher.id
                 )
@@ -164,8 +164,8 @@ class ModelTestCase(unittest.TestCase):
         self.db.session.commit()
 
         saved_package = (
-                self.db.session.query(model.Package)
-                .filter(model.Package.name == 'bla').first()
+                self.db.session.query(model.Project)
+                .filter(model.Project.name == 'bla').first()
                 )
         analysis = saved_package.versions[-1].analysis
         self.assertEqual(len(analysis), 2)

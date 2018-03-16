@@ -3,7 +3,7 @@ from unittest.mock import MagicMock
 
 from kiskadee.monitor import Monitor
 from kiskadee.queue import Queues
-from kiskadee.model import Package, Fetcher
+from kiskadee.model import Project, Fetcher
 import kiskadee.queue
 import kiskadee.fetchers.debian
 import kiskadee.fetchers.anitya
@@ -14,7 +14,7 @@ class MonitorTestCase(unittest.TestCase):
 
     def setUp(self):
         def mocked_models(klass):
-            class Package:
+            class Project:
                 def all(self):
                     [self.pkg1, self.pkg2, self.pkg3, self.pkg4]
             klass()
@@ -57,7 +57,7 @@ class MonitorTestCase(unittest.TestCase):
 
     def test_send_project_to_runner(self):
         fetcher = Fetcher(name='example')
-        Package(name='project1', fetcher_id=fetcher.id)
+        Project(name='project1', fetcher_id=fetcher.id)
         self.monitor.get_fetcher_and_project = MagicMock(
                 return_value=[fetcher, {}]
                 )
