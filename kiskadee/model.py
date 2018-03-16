@@ -139,7 +139,9 @@ class Analysis(Base):
                               uselist=False, back_populates='analysis')
 
     @staticmethod
-    def save(db, data, analyzer, result, version):
+    def save(db, analyzer, result, project):
+        version = project.versions[-1]
+        name = project.name
         _analysis = kiskadee.model.Analysis()
         try:
             _analyzer = db.session.query(kiskadee.model.Analyzer).\
@@ -153,10 +155,10 @@ class Analysis(Base):
                     'results': _analysis.raw['results'],
                     'id': _analysis.id
                 }
-            Report.save(db, dict_analysis, data, _analyzer.name)
+            Report.save(db, dict_analysis, _analyzer.name, name)
             kiskadee.logger.debug(
                     "MONITOR: Saved analysis done by {} for project: {}-{}"
-                    .format(analyzer, data["name"], data["version"])
+                    .format(analyzer, name, version.number)
                 )
             return
         except Exception as err:
@@ -184,7 +186,7 @@ class Report(Base):
     analysis = orm.relationship('Analysis', back_populates='report')
 
     @staticmethod
-    def save(db, analysis, data, analyzer_name):
+    def save(db, analysis, analyzer_name, project_name):
         try:
             results = analysis['results']
             analyzer_report = Report.REPORTERS[analyzer_name](results)
@@ -198,7 +200,7 @@ class Report(Base):
             db.session.commit()
             kiskadee.logger.debug(
                     "MONITOR: Saved analysis reports for {} project"
-                    .format(data["name"])
+                    .format(project_name)
                 )
         except KeyError as key:
             kiskadee.logger.debug(
@@ -209,7 +211,7 @@ class Report(Base):
         except Exception as err:
             kiskadee.logger.debug(
                     "MONITOR: Failed to get analysis reports to {} project"
-                    .format(data["name"])
+                    .format(project_name)
                 )
             kiskadee.logger.debug(err)
         return

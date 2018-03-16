@@ -44,8 +44,8 @@ class MonitorTestCase(unittest.TestCase):
         self.assertEqual(monitored_project['version'], '0.1')
 
     def test_run_fetchers_as_threads(self):
-        Monitor._start_fetcher(self.example_fetcher.watch)
-        Monitor._start_fetcher(self.example_fetcher.watch)
+        Monitor.start_fetcher(self.example_fetcher.watch)
+        Monitor.start_fetcher(self.example_fetcher.watch)
         first_monitored_project = self.monitor.dequeue_project_from_fetchers()
         second_monitored_project = self.monitor.dequeue_project_from_fetchers()
         self.assertIn("version", first_monitored_project)

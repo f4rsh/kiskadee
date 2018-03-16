@@ -55,12 +55,13 @@ class Queues():
         return result
 
     @staticmethod
-    def enqueue_project(project, fetcher):
+    def enqueue_project(project, fetcher=None):
         """Put a result on the results queue."""
-        kiskadee.logger.debug(
-                "FETCHER {}: sending package {}-{} for monitor"
-                .format(fetcher, project['name'], project['version'])
-            )
+        if fetcher:
+            kiskadee.logger.debug(
+                    "FETCHER {}: sending package {}-{} for monitor"
+                    .format(fetcher, project['name'], project['version'])
+                )
         projects.put(project)
 
     @staticmethod

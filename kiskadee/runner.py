@@ -27,7 +27,7 @@ class Runner:
 
         Continuously dequeue projects from `analyses_queue` and call the
         :func:`analyze` method, passing the dequeued project as argument.
-        After the analysis, send the result back to monitor.
+        After the analysis, send the result back to Monitor.
         """
         kiskadee.logger.debug('RUNNER PID: {}'.format(os.getpid()))
         while RUNNING:
@@ -89,7 +89,7 @@ class Runner:
         The `analyzer` is the name of a static analyzer already created on the
         database.
         The `source_path` is the directory to a uncompressed source, returned
-        by the :func:`_path_to_uncompressed_source`.
+        by the :func:`get_project_code_path`.
         """
         if source_path is None:
             return None
@@ -112,7 +112,8 @@ class Runner:
             return None
 
     def get_project_code_path(self):
-
+        """ Returns a string, representing the path of the uncompressed
+        project source."""
         if not (self.fetcher and self.project):
             return None
 

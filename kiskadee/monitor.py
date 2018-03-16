@@ -23,10 +23,14 @@ class Monitor:
         Analyzer.create_analyzers(self.db)
 
     def run(self):
+        """Run Monitor process. This method resumes Monitor behavior. It dequeue
+        projects from fetchers, check if the project is valid and if so send it
+        to Runner. When Runner ends a analysis, the Monitor dequeue the analysis
+        and save it on database. """
         kiskadee.logger.debug('MONITOR PID: {}'.format(os.getpid()))
 
         for fetcher in kiskadee.load_fetchers():
-            thread = Monitor._start_fetcher(fetcher.Fetcher().watch)
+            thread = Monitor.start_fetcher(fetcher.Fetcher().watch)
 
         while RUNNING:
             kiskadee.logger.debug('MONITOR STATE: Idle'.format(os.getpid()))
@@ -47,7 +51,7 @@ class Monitor:
             data["fetcher_id"] = fetcher.id if fetcher else ''
             if not self.is_a_new_project_version(project, data):
                 kiskadee.logger.debug('MONITOR STATE: Project {} already'\
-                        'analyzed'.format(data['name']))
+                        ' analyzed'.format(data['name']))
                 return
             self.queues.enqueue_analysis(data)
 
@@ -74,15 +78,18 @@ class Monitor:
         project = self.db.filter_by_name(Project, data['name'])
         if not project:
             project = Project.save(self.db, data)
-        if project:
+        else:
             project = Project.update(self.db, project, data)
+        self.save_project_analysis(data, project)
 
+    def save_project_analysis(self, data, project):
         for analyzer, result in data['results'].items():
-            Analysis.save(self.db, data, analyzer, result, project.versions[-1])
+            Analysis.save(self.db, analyzer, result, project)
 
 
     @staticmethod
-    def _start_fetcher(module, joinable=False, timeout=None):
+    def start_fetcher(module, joinable=False, timeout=None):
+        """Start a fetcher as a thread of the Monitor process."""
         module_as_a_thread = threading.Thread(target=module)
         module_as_a_thread.daemon = True
         module_as_a_thread.start()

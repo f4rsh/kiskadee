@@ -37,7 +37,7 @@ The class defines the following public behaviors:
 
 
 .. autoclass:: kiskadee.monitor.Monitor()
-    :members: monitor
+    :members:
 
 Runner - Module to run static analysis
 --------------------------------------

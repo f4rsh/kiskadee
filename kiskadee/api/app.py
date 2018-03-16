@@ -26,27 +26,27 @@ def index():
         return jsonify({'fetchers': result.data})
 
 
-@kiskadee.route('/packages')
-def packages():
-    """Get the list of analyzed packages."""
+@kiskadee.route('/projects')
+def projects():
+    """Get the list of analyzed projects."""
     if request.method == 'GET':
-        packages = db.session.query(Project).all()
-        package_schema = ProjectSchema(
+        projects = db.session.query(Project).all()
+        project_schema = ProjectSchema(
             many=True,
-            exclude=['versions.analysis', 'versions.package_id']
+            exclude=['versions.analysis', 'versions.project_id']
         )
-        data, errors = package_schema.dump(packages)
-        return jsonify({'packages': data})
+        data, errors = project_schema.dump(projects)
+        return jsonify({'projects': data})
 
 
-@kiskadee.route('/analysis/<pkg_name>/<version>', methods=['GET'])
-def package_analysis_overview(pkg_name, version):
-    """Get a analysis list of some package version."""
+@kiskadee.route('/analysis/<project_name>/<version>', methods=['GET'])
+def project_analysis_overview(project_name, version):
+    """Get a analysis list of some project version."""
 
-    #TODO: This can be a simple inner join between package, version and analysis
-    _package_id = db.filter_by_name(Project, pkg_name).id
+    #TODO: This can be a simple inner join between project, version and analysis
+    _project_id = db.filter_by_name(Project, project_name).id
     version_id = db.session.query(Version)\
-            .filter_by(number = version, package_id = _package_id ).first().id
+            .filter_by(number = version, project_id = _project_id ).first().id
     analysis = (
             db.session.query(Analysis)
             .options(
