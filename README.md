@@ -34,6 +34,11 @@ available [here](https://www.ime.usp.br/~athoscr/files/ranking_data.tgz).
 
 Join us on IRC: #kiskadee @ freenode
 
+Mailing list: `kiskadee@googlegroups.com`
+
+You can subscribe to our mailing lists by sending an email to
+`kiskadee+subscribe@googlegroups.com`.
+
 ## License
 Copyright (C) 2017 the AUTHORS (see the AUTHORS file)
 
