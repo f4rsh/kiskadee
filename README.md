@@ -13,9 +13,9 @@ documentation](https://docs.pagure.org/kiskadee).
 
 To build the documentation locally:
 
-  pip install -U sphinx sphinx\_rtd\_theme
-  cd doc
-  make html
+	pip install -U sphinx sphinx\_rtd\_theme
+	cd doc
+	make html
 
 Open the index.html file, inside the _build/html directory.
 
