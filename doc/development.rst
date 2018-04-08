@@ -1,10 +1,10 @@
 kiskadee development
 ====================
 
-This section is a guide for new developers willing to
-set up a development environemnt to start contributing to
-kiskadee development. If you have any doubt, please contact
-us on IRC in #kiskadee at freenode.
+This section is a guide for new developers willing to set up a development
+environemnt to start contributing to kiskadee development. If you have any
+doubt, please contact us on IRC in #kiskadee at freenode or join the
+development discussion in our mailing list at kiskadee@googlegroups.com.
 
 **kiskadee development only suports python versions >= 3. Assume such versions
 for all commands run along this documentation.**
