@@ -43,14 +43,14 @@ class Fetcher(abc.ABC):
         This method will be called as a thread, and will run concurrently with
         the main kiskadee thread. The monitoring process must be done by
         classes that heritage from this one. This method is only responsible
-        to enqueue new monitored projects, so must be called by it childrens.
+        to enqueue new monitored packages, so must be called by it childrens.
         """
-        project = kwargs
-        if not project:
+        package = kwargs
+        if not package:
             raise NotImplementedError('fetcher must call parent watch method ')
 
-        fetcher = project['fetcher'].split('.')[-1]
-        kiskadee.queue.Queues().enqueue_project(project, fetcher)
+        fetcher = package['fetcher'].split('.')[-1]
+        kiskadee.queue.Queues().enqueue_package(package, fetcher)
 
     @abc.abstractmethod
     def compare_versions(self, new, old):

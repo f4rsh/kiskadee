@@ -37,7 +37,7 @@ class ApiTestCase(unittest.TestCase):
                 )
 
         self.db.filter_by_name = MagicMock()
-        self.db.session.query(kiskadee.model.Project)\
+        self.db.session.query(kiskadee.model.Package)\
             .filter_by().id = MagicMock()
         self.db.session.query(kiskadee.model.Version)\
             .filter_by().id = MagicMock()

@@ -3,7 +3,7 @@ from unittest.mock import MagicMock
 
 from kiskadee.monitor import Monitor
 from kiskadee.queue import Queues
-from kiskadee.model import Project, Fetcher
+from kiskadee.model import Package, Fetcher
 import kiskadee.queue
 import kiskadee.fetchers.debian
 import kiskadee.fetchers.anitya
@@ -14,7 +14,7 @@ class MonitorTestCase(unittest.TestCase):
 
     def setUp(self):
         def mocked_models(klass):
-            class Project:
+            class Package:
                 def all(self):
                     [self.pkg1, self.pkg2, self.pkg3, self.pkg4]
             klass()
@@ -35,36 +35,36 @@ class MonitorTestCase(unittest.TestCase):
                     'flawfinder': '><'},
                 'fetcher_id': 1}
 
-    def test_dequeue_project_from_fetcher(self):
+    def test_dequeue_package_from_fetcher(self):
         self.example_fetcher.watch()
-        monitored_project = self.monitor.dequeue_project_from_fetchers()
-        self.assertIn("version", monitored_project)
-        self.assertIn("name", monitored_project)
-        self.assertIn("fetcher", monitored_project)
-        self.assertEqual(monitored_project['version'], '0.1')
+        monitored_package = self.monitor.dequeue_package_from_fetchers()
+        self.assertIn("version", monitored_package)
+        self.assertIn("name", monitored_package)
+        self.assertIn("fetcher", monitored_package)
+        self.assertEqual(monitored_package['version'], '0.1')
 
     def test_run_fetchers_as_threads(self):
         Monitor.start_fetcher(self.example_fetcher.watch)
         Monitor.start_fetcher(self.example_fetcher.watch)
-        first_monitored_project = self.monitor.dequeue_project_from_fetchers()
-        second_monitored_project = self.monitor.dequeue_project_from_fetchers()
-        self.assertIn("version", first_monitored_project)
-        self.assertIn("version", second_monitored_project)
-        self.assertIn("name", first_monitored_project)
-        self.assertIn("name", second_monitored_project)
-        self.assertIn("fetcher", first_monitored_project)
-        self.assertIn("fetcher", second_monitored_project)
+        first_monitored_package = self.monitor.dequeue_package_from_fetchers()
+        second_monitored_package = self.monitor.dequeue_package_from_fetchers()
+        self.assertIn("version", first_monitored_package)
+        self.assertIn("version", second_monitored_package)
+        self.assertIn("name", first_monitored_package)
+        self.assertIn("name", second_monitored_package)
+        self.assertIn("fetcher", first_monitored_package)
+        self.assertIn("fetcher", second_monitored_package)
 
-    def test_send_project_to_runner(self):
+    def test_send_package_to_runner(self):
         fetcher = Fetcher(name='example')
-        Project(name='project1', fetcher_id=fetcher.id)
-        self.monitor.get_fetcher_and_project = MagicMock(
+        Package(name='package1', fetcher_id=fetcher.id)
+        self.monitor.get_fetcher_and_package = MagicMock(
                 return_value=[fetcher, {}]
                 )
-        self.monitor.is_a_new_project_version = MagicMock(
+        self.monitor.is_a_new_package_version = MagicMock(
                 return_value=True
                 )
-        self.monitor.send_project_to_runner(self.data1)
+        self.monitor.send_package_to_runner(self.data1)
         self.assertEqual(self.monitor.queues.dequeue_analysis(), self.data1)
 
         if __name__ == '__main__':

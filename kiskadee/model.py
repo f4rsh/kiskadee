@@ -11,21 +11,21 @@ from kiskadee.report import CppcheckReport, FlawfinderReport
 Base = declarative_base()
 
 
-class Project(Base):
-    """Software projects abstraction.
+class Package(Base):
+    """Software packages abstraction.
 
-    A project is the source code stored on some repository. It may be
+    A software package is the source code for a software package. It may be
     upstream's distribution or the sources provided by some other source, like
     a linux distribution.
     """
 
-    __tablename__ = 'projects'
+    __tablename__ = 'packages'
     id = Column(Integer,
-                Sequence('projects_id_seq', optional=True), primary_key=True)
+                Sequence('packages_id_seq', optional=True), primary_key=True)
     name = Column(Unicode(255), nullable=False)
     homepage = Column(Unicode(255), nullable=True)
     fetcher_id = Column(Integer, ForeignKey('fetchers.id'), nullable=False)
-    versions = orm.relationship('Version', backref='projects')
+    versions = orm.relationship('Version', backref='packages')
     __table_args__ = (
             UniqueConstraint('name', 'fetcher_id'),
             )
@@ -36,37 +36,37 @@ class Project(Base):
         if ('meta' in data) and ('homepage' in data['meta']):
             homepage = data['meta']['homepage']
 
-        _project = Project(
+        _package = Package(
                 name=data['name'],
                 homepage=homepage,
                 fetcher_id=data['fetcher_id']
                 )
-        db.session.add(_project)
+        db.session.add(_package)
         db.session.commit()
         _version = Version(number=data['version'],
-                           project_id=_project.id)
+                           package_id=_package.id)
         db.session.add(_version)
         db.session.commit()
-        return _project
+        return _package
 
     @staticmethod
-    def update(db, project, data):
+    def update(db, package, data):
 
-        if(project.versions[-1].number == data['version']):
-            return project
+        if(package.versions[-1].number == data['version']):
+            return package
         try:
             _new_version = Version(
                     number=data['version'],
-                    project_id=project.id
+                    package_id=package.id
                     )
-            project.versions.append(_new_version)
-            db.session.add(project)
+            package.versions.append(_new_version)
+            db.session.add(package)
             db.session.commit()
             kiskadee.logger.debug(
-                    "MONITOR: Sending project {}_{}"
+                    "MONITOR: Sending package {}_{}"
                     "for analysis".format(data['name'], data['version'])
                     )
-            return project
+            return package
         except ValueError:
             kiskadee.logger.debug("MONITOR: Could not compare versions")
             return None
@@ -81,20 +81,20 @@ class Fetcher(Base):
     name = Column(Unicode(255), nullable=False, unique=True)
     target = Column(Unicode(255), nullable=True)
     description = Column(UnicodeText)
-    projects = orm.relationship('Project', backref='fetchers')
+    packages = orm.relationship('Package', backref='fetchers')
 
 
 class Version(Base):
-    """Abstraction of a project version."""
+    """Abstraction of a package version."""
 
     __tablename__ = 'versions'
     id = Column(Integer,
                 Sequence('versions_id_seq', optional=True), primary_key=True)
     number = Column(Unicode(100), nullable=False)
-    project_id = Column(Integer, ForeignKey('projects.id'), nullable=False)
+    package_id = Column(Integer, ForeignKey('packages.id'), nullable=False)
     analysis = orm.relationship('Analysis', backref='versions')
     __table_args__ = (
-            UniqueConstraint('number', 'project_id'),
+            UniqueConstraint('number', 'package_id'),
             )
 
 
@@ -127,7 +127,7 @@ class Analyzer(Base):
         db.session.commit()
 
 class Analysis(Base):
-    """Abstraction of a project analysis."""
+    """Abstraction of a package analysis."""
 
     __tablename__ = 'analysis'
     id = Column(Integer,
@@ -139,9 +139,9 @@ class Analysis(Base):
                               uselist=False, back_populates='analysis')
 
     @staticmethod
-    def save(db, analyzer, result, project):
-        version = project.versions[-1]
-        name = project.name
+    def save(db, analyzer, result, package):
+        version = package.versions[-1]
+        name = package.name
         _analysis = kiskadee.model.Analysis()
         try:
             _analyzer = db.session.query(kiskadee.model.Analyzer).\
@@ -157,8 +157,8 @@ class Analysis(Base):
                 }
             Report.save(db, dict_analysis, _analyzer.name, name)
             kiskadee.logger.debug(
-                    "MONITOR: Saved analysis done by {} for project: {}-{}"
-                    .format(analyzer, name, version.number)
+                    "MONITOR: Saved analysis done by {} for package: {}-{}"
+                    .format(analyzer, data["name"], data["version"])
                 )
             return
         except Exception as err:
@@ -186,7 +186,7 @@ class Report(Base):
     analysis = orm.relationship('Analysis', back_populates='report')
 
     @staticmethod
-    def save(db, analysis, analyzer_name, project_name):
+    def save(db, analysis, analyzer_name, package_name):
         try:
             results = analysis['results']
             analyzer_report = Report.REPORTERS[analyzer_name](results)
@@ -199,8 +199,8 @@ class Report(Base):
             db.session.add(_reports)
             db.session.commit()
             kiskadee.logger.debug(
-                    "MONITOR: Saved analysis reports for {} project"
-                    .format(project_name)
+                    "MONITOR: Saved analysis reports for {} package"
+                    .format(data["name"])
                 )
         except KeyError as key:
             kiskadee.logger.debug(
@@ -210,8 +210,8 @@ class Report(Base):
                 )
         except Exception as err:
             kiskadee.logger.debug(
-                    "MONITOR: Failed to get analysis reports to {} project"
-                    .format(project_name)
+                    "MONITOR: Failed to get analysis reports to {} package"
+                    .format(data["name"])
                 )
             kiskadee.logger.debug(err)
         return

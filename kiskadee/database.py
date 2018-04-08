@@ -4,7 +4,7 @@ from sqlalchemy import create_engine, orm
 
 import kiskadee
 from kiskadee.model import Base
-from kiskadee.model import Project, Fetcher, Version, Report, Analysis
+from kiskadee.model import Package, Fetcher, Version, Report, Analysis
 
 class Database:
     """kiskadee Database class."""

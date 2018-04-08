@@ -70,7 +70,7 @@ class DebianFetcherTestCase(unittest.TestCase):
         self.debian_fetcher._queue_sources_gz_pkgs(temp_dir)
         shutil.rmtree(temp_dir)
 
-        some_pkg = kiskadee.queue.Queues.dequeue_project()
+        some_pkg = kiskadee.queue.Queues.dequeue_package()
         self.assertTrue(isinstance(some_pkg, dict))
         self.assertIn('name', some_pkg)
         self.assertIn('version', some_pkg)
@@ -112,11 +112,11 @@ class TestAnityaFetcher(unittest.TestCase):
         import kiskadee.fetchers.anitya
         self.anitya_fetcher = kiskadee.fetchers.anitya.Fetcher()
 
-        self.msg = "anitya {'body':{'msg':{'project':{name: 'urlscan',"\
+        self.msg = "anitya {'body':{'msg':{'package':{name: 'urlscan',"\
                    "'version':'0.8.5','backend':'GitHub',"\
                    "'homepage':'https://github.com/firecat53/urlscan'}}}}"
 
-        self.msg1 = "{'body':{'msg':{'project':{name: 'urlscan',"\
+        self.msg1 = "{'body':{'msg':{'package':{name: 'urlscan',"\
                     "'version':'0.8.5','backend':'GitHub',"\
                     "'homepage':'https://github.com/firecat53/urlscan'}}}}"
 
@@ -192,8 +192,8 @@ class TestAnityaFetcher(unittest.TestCase):
 
     def test_create_package_dict(self):
 
-        self.anitya_fetcher.project_to_enqueue(self.msg)
-        _dict = kiskadee.queue.Queues().dequeue_project()
+        self.anitya_fetcher.package_to_enqueue(self.msg)
+        _dict = kiskadee.queue.Queues().dequeue_package()
         self.assertEqual(_dict['name'], 'urlscan')
         self.assertEqual(_dict['version'], '0.8.5')
         self.assertEqual(_dict['meta']['backend'], 'GitHub')

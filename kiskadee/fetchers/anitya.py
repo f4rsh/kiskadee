@@ -17,9 +17,9 @@ class Fetcher(kiskadee.fetchers.Fetcher):
     def watch(self):
         """Start the monitoring process for Anitya reports.
 
-        Each project monitored by the fetcher will be
+        Each package monitored by the fetcher will be
         queued by calling the watch parent method,
-        passing the project data as argument.
+        passing the package data as argument.
 
         The fetcher will use zmq as messaging protocol to receive
         the fedmsg-hub events. kiskadee and fedmsg-hub runs in different
@@ -36,7 +36,7 @@ class Fetcher(kiskadee.fetchers.Fetcher):
         if socket:
             while True:
                 msg = socket.recv_string()
-                project = self.project_to_enqueue(msg)
+                package = self.package_to_enqueue(msg)
 
     def get_sources(self, source_data):
         """Download packages from some Anitya Backend."""
@@ -77,22 +77,22 @@ class Fetcher(kiskadee.fetchers.Fetcher):
             kiskadee.logger.debug(err)
             return False
 
-    def project_to_enqueue(self, fedmsg_event):
+    def package_to_enqueue(self, fedmsg_event):
         event = self._event_to_dict(fedmsg_event)
         if event:
-            project = event.get('body').get('msg').get('project')
+            package = event.get('body').get('msg').get('package')
             source_dict = {}
-            if project:
-                kiskadee_project = {
-                        'name': project.get('name'),
-                        'version': project.get('version'),
+            if package:
+                kiskadee_package = {
+                        'name': package.get('name'),
+                        'version': package.get('version'),
                         'fetcher': __name__,
                         'meta': {
-                            'backend': project.get('backend'),
-                            'homepage': project.get('homepage')
+                            'backend': package.get('backend'),
+                            'homepage': package.get('homepage')
                         }
                 }
-                super().watch(**kiskadee_project)
+                super().watch(**kiskadee_package)
 
     def _event_to_dict(self, msg):
         msg = msg[msg.find(" ")+1::]
@@ -125,7 +125,7 @@ class Backends():
 class AnityaConsumer(fedmsg.consumers.FedmsgConsumer):
     """Consumer used by fedmsg-hub to subscribe to fedmsg bus."""
 
-    topic = 'org.release-monitoring.prod.anitya.project.version.update'
+    topic = 'org.release-monitoring.prod.anitya.package.version.update'
     config_key = 'anityaconsumer'
     validate_signatures = False
 

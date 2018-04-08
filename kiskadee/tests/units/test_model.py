@@ -14,16 +14,16 @@ class ModelTestCase(unittest.TestCase):
 
     def setUp(self):
         kiskadee.tests.clean_test_db(self.db, model.Base.metadata)
-        self.project = model.Project(name='python-kiskadee')
+        self.package = model.Package(name='python-kiskadee')
         self.version = model.Version(number='1.0-rc1')
         self.fetcher = model.Fetcher(
               name='kiskadee-fetcher', target='university'
             )
         self.db.session.add(self.fetcher)
         self.db.session.commit()
-        self.fetcher.projects.append(self.project)
-        self.project.versions.append(self.version)
-        self.db.session.add(self.project)
+        self.fetcher.packages.append(self.package)
+        self.package.versions.append(self.version)
+        self.db.session.add(self.package)
         self.db.session.add(self.fetcher)
         self.db.session.add(self.version)
 
@@ -43,9 +43,9 @@ class ModelTestCase(unittest.TestCase):
         fetchers = self.db.session.query(model.Fetcher).all()
         self.assertEqual(fetchers, [self.fetcher])
 
-    def test_query_project(self):
-        projects = self.db.session.query(model.Project).all()
-        self.assertEqual(projects, [self.project])
+    def test_query_package(self):
+        packages = self.db.session.query(model.Package).all()
+        self.assertEqual(packages, [self.package])
 
     def test_query_version(self):
         versions = self.db.session.query(model.Version).all()
@@ -62,7 +62,7 @@ class ModelTestCase(unittest.TestCase):
         fetchers = self.db.session.query(model.Fetcher).all()
         self.assertEqual(len(fetchers), 2)
 
-    def test_add_version_without_project(self):
+    def test_add_version_without_package(self):
         version = model.Version(number='3.1')
         self.db.session.add(version)
         with self.assertRaises(exc.IntegrityError):
@@ -75,51 +75,51 @@ class ModelTestCase(unittest.TestCase):
         with self.assertRaises(exc.IntegrityError):
             self.db.session.commit()
 
-    def test_add_project_without_fetcher(self):
-        project = model.Project(name='foo-bar')
-        self.db.session.add(project)
+    def test_add_package_without_fetcher(self):
+        package = model.Package(name='foo-bar')
+        self.db.session.add(package)
         with self.assertRaises(exc.IntegrityError):
             self.db.session.commit()
 
-    def test_unique_project_in_fetcher(self):
-        project_1 = model.Project(name='foo-bar')
-        project_2 = model.Project(name='foo-bar')
-        self.fetcher.projects.append(project_1)
-        self.fetcher.projects.append(project_2)
+    def test_unique_package_in_fetcher(self):
+        package_1 = model.Package(name='foo-bar')
+        package_2 = model.Package(name='foo-bar')
+        self.fetcher.packages.append(package_1)
+        self.fetcher.packages.append(package_2)
         with self.assertRaises(exc.IntegrityError):
             self.db.session.commit()
 
-    def test_unique_version_for_project(self):
-        project_version_1 = model.Version(number='1.0')
-        project_version_2 = model.Version(number='1.0')
-        self.project.versions.append(project_version_1)
-        self.project.versions.append(project_version_2)
+    def test_unique_version_for_package(self):
+        package_version_1 = model.Version(number='1.0')
+        package_version_2 = model.Version(number='1.0')
+        self.package.versions.append(package_version_1)
+        self.package.versions.append(package_version_2)
         with self.assertRaises(exc.IntegrityError):
             self.db.session.commit()
 
     def test_compose_kiskadee_source(self):
         _analyzer = self.db.session.query(model.Analyzer)\
                     .filter(model.Analyzer.name == "cppcheck").first()
-        project = model.Project(
+        package = model.Package(
                 name='bla',
                 fetcher_id=self.fetcher.id
                 )
-        project_version = model.Version(
+        package_version = model.Version(
                 number='1.0.1',
-                project_id=project.id
+                package_id=package.id
                 )
 
-        project_analysis = model.Analysis(
+        package_analysis = model.Analysis(
                 raw="<>",
                 analyzer_id=_analyzer.id,
-                version_id=project_version.id
+                version_id=package_version.id
                 )
 
-        self.fetcher.projects.append(project)
-        project.versions.append(project_version)
-        project_version.analysis.append(project_analysis)
+        self.fetcher.packages.append(package)
+        package.versions.append(package_version)
+        package_version.analysis.append(package_analysis)
 
-        self.assertEqual(project.versions[0].analysis[0].raw, "<>")
+        self.assertEqual(package.versions[0].analysis[0].raw, "<>")
 
     def test_save_several_analysis(self):
 
@@ -132,42 +132,42 @@ class ModelTestCase(unittest.TestCase):
                 .filter(model.Analyzer.name == "flawfinder").first()
                 )
 
-        project = model.Project(
+        package = model.Package(
                 name='bla',
                 fetcher_id=self.fetcher.id
                 )
-        project_version = model.Version(
+        package_version = model.Version(
                 number='1.0.1',
-                project_id=project.id
+                package_id=package.id
                 )
 
-        self.fetcher.projects.append(project)
-        project.versions.append(project_version)
+        self.fetcher.packages.append(package)
+        package.versions.append(package_version)
 
-        self.db.session.add(project)
-        self.db.session.add(project_version)
+        self.db.session.add(package)
+        self.db.session.add(package_version)
         self.db.session.commit()
 
-        project_analysis1 = model.Analysis(
+        package_analysis1 = model.Analysis(
                 raw="<>",
                 analyzer_id=_analyzer1.id,
-                version_id=project_version.id
+                version_id=package_version.id
                 )
-        project_analysis2 = model.Analysis(
+        package_analysis2 = model.Analysis(
                 raw="><",
                 analyzer_id=_analyzer2.id,
-                version_id=project_version.id
+                version_id=package_version.id
                 )
 
-        self.db.session.add(project_analysis1)
-        self.db.session.add(project_analysis2)
+        self.db.session.add(package_analysis1)
+        self.db.session.add(package_analysis2)
         self.db.session.commit()
 
-        saved_project = (
-                self.db.session.query(model.Project)
-                .filter(model.Project.name == 'bla').first()
+        saved_package = (
+                self.db.session.query(model.Package)
+                .filter(model.Package.name == 'bla').first()
                 )
-        analysis = saved_project.versions[-1].analysis
+        analysis = saved_package.versions[-1].analysis
         self.assertEqual(len(analysis), 2)
         self.assertEqual(analysis[0].raw, "<>")
         self.assertEqual(analysis[1].raw, "><")

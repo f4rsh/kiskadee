@@ -4,8 +4,8 @@ from flask import request
 from flask_cors import CORS
 
 from kiskadee.database import Database
-from kiskadee.model import Project, Fetcher, Version, Analysis
-from kiskadee.api.serializers import ProjectSchema, FetcherSchema,\
+from kiskadee.model import Package, Fetcher, Version, Analysis
+from kiskadee.api.serializers import PackageSchema, FetcherSchema,\
         AnalysisSchema
 import json
 from sqlalchemy.orm import eagerload
@@ -26,27 +26,27 @@ def index():
         return jsonify({'fetchers': result.data})
 
 
-@kiskadee.route('/projects')
-def projects():
-    """Get the list of analyzed projects."""
+@kiskadee.route('/packages')
+def packages():
+    """Get the list of analyzed packages."""
     if request.method == 'GET':
-        projects = db.session.query(Project).all()
-        project_schema = ProjectSchema(
+        packages = db.session.query(Package).all()
+        package_schema = PackageSchema(
             many=True,
-            exclude=['versions.analysis', 'versions.project_id']
+            exclude=['versions.analysis', 'versions.package_id']
         )
-        data, errors = project_schema.dump(projects)
-        return jsonify({'projects': data})
+        data, errors = package_schema.dump(packages)
+        return jsonify({'packages': data})
 
 
-@kiskadee.route('/analysis/<project_name>/<version>', methods=['GET'])
-def project_analysis_overview(project_name, version):
-    """Get a analysis list of some project version."""
+@kiskadee.route('/analysis/<pkg_name>/<version>', methods=['GET'])
+def package_analysis_overview(pkg_name, version):
+    """Get a analysis list of some package version."""
 
-    #TODO: This can be a simple inner join between project, version and analysis
-    _project_id = db.filter_by_name(Project, project_name).id
+    #TODO: This can be a simple inner join between package, version and analysis
+    _package_id = db.filter_by_name(Package, pkg_name).id
     version_id = db.session.query(Version)\
-            .filter_by(number = version, project_id = _project_id ).first().id
+            .filter_by(number = version, package_id = _package_id ).first().id
     analysis = (
             db.session.query(Analysis)
             .options(

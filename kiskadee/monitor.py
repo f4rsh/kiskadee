@@ -1,6 +1,6 @@
 """Provide kiskadee monitoring capabilities.
 
-kiskadee monitors repositories checking for new project versions to be
+kiskadee monitors repositories checking for new package versions to be
 analyzed. This module provides such capabilities.
 """
 import threading
@@ -9,7 +9,7 @@ import os
 import importlib
 
 import kiskadee
-from kiskadee.model import Project, Fetcher, Version, Report, Analysis, Analyzer
+from kiskadee.model import Package, Fetcher, Version, Report, Analysis, Analyzer
 
 RUNNING = True
 
@@ -24,7 +24,7 @@ class Monitor:
 
     def run(self):
         """Run Monitor process. This method resumes Monitor behavior. It dequeue
-        projects from fetchers, check if the project is valid and if so send it
+        packages from fetchers, check if the package is valid and if so send it
         to Runner. When Runner ends a analysis, the Monitor dequeue the analysis
         and save it on database. """
         kiskadee.logger.debug('MONITOR PID: {}'.format(os.getpid()))
@@ -34,57 +34,56 @@ class Monitor:
 
         while RUNNING:
             kiskadee.logger.debug('MONITOR STATE: Idle'.format(os.getpid()))
-            new_project = self.dequeue_project_from_fetchers()
-            self.send_project_to_runner(new_project)
-            analyzed_project = self.dequeue_analysis_from_runner()
-            self.save_analyzed_project(analyzed_project)
+            new_package = self.dequeue_package_from_fetchers()
+            self.send_package_to_runner(new_package)
+            analyzed_package = self.dequeue_analysis_from_runner()
+            self.save_analyzed_package(analyzed_package)
 
-    def dequeue_project_from_fetchers(self):
-        return self.queues.dequeue_project()
+    def dequeue_package_from_fetchers(self):
+        return self.queues.dequeue_package()
 
     def dequeue_analysis_from_runner(self):
         return self.queues.dequeue_result()
 
-    def send_project_to_runner(self, data):
+    def send_package_to_runner(self, data):
         if data:
-            fetcher, project = self.get_fetcher_and_project(data)
+            fetcher, package = self.get_fetcher_and_package(data)
             data["fetcher_id"] = fetcher.id if fetcher else ''
-            if not self.is_a_new_project_version(project, data):
-                kiskadee.logger.debug('MONITOR STATE: Project {} already'\
+            if not self.is_a_new_package_version(package, data):
+                kiskadee.logger.debug('MONITOR STATE: Package {} already'\
                         ' analyzed'.format(data['name']))
                 return
             self.queues.enqueue_analysis(data)
 
 
-    def get_fetcher_and_project(self, data):
+    def get_fetcher_and_package(self, data):
         fetcher_name = data['fetcher'].split('.')[-1]
-        project_name = data['name']
+        package_name = data['name']
         fetcher = self.db.filter_by_name(Fetcher, fetcher_name)
-        project = self.db.filter_by_name(Project, project_name)
-        return fetcher, project
+        package = self.db.filter_by_name(Package, package_name)
+        return fetcher, package
 
-    def is_a_new_project_version(self, project, data):
-        if project:
-            project_version = data['version']
-            analysed_version = project.versions[-1].number
+    def is_a_new_package_version(self, package, data):
+        if package:
+            package_version = data['version']
+            analysed_version = package.versions[-1].number
             fetcher = importlib.import_module(data['fetcher']).Fetcher()
-            return fetcher.compare_versions(project_version, analysed_version)
+            return fetcher.compare_versions(package_version, analysed_version)
         else:
             return True
 
-    def save_analyzed_project(self, data):
+    def save_analyzed_package(self, data):
         if not data:
             return {}
-        project = self.db.filter_by_name(Project, data['name'])
-        if not project:
-            project = Project.save(self.db, data)
+        package = self.db.filter_by_name(Package, data['name'])
+        if not package:
+            Package.save(self.db, data)
         else:
-            project = Project.update(self.db, project, data)
-        self.save_project_analysis(data, project)
+            Package.update(self.db, package, data)
 
-    def save_project_analysis(self, data, project):
+    def save_package_analysis(self, data, package):
         for analyzer, result in data['results'].items():
-            Analysis.save(self.db, analyzer, result, project)
+            Analysis.save(self.db, analyzer, result, package)
 
 
     @staticmethod

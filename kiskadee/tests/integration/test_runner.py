@@ -23,7 +23,7 @@ class RunnerTestCase(unittest.TestCase):
         self.queues = kiskadee.queue.Queues()
         self.runner = kiskadee.runner.Runner(self.queues)
 
-        self.project = {
+        self.package = {
                 'name': 'test',
                 'version': '1.0.0',
                 'fetcher': kiskadee.fetchers.example.__name__
@@ -33,27 +33,27 @@ class RunnerTestCase(unittest.TestCase):
         """TODO: to be defined1. """
 
     def test_run_analyzers(self):
-        self.runner.project = self.project
+        self.runner.package = self.package
         self.runner.call_analyzers()
         result = self.queues.dequeue_result()
         self.assertEqual(result['name'], 'test')
         self.assertIn('results', result)
 
     def test_run_a_single_analyzer(self):
-        self.runner.project = self.project
-        self.runner.fetcher = self.runner.import_project_fetcher()
-        self.runner.get_project_code_path()
+        self.runner.package = self.package
+        self.runner.fetcher = self.runner.import_package_fetcher()
+        self.runner.get_package_code_path()
         analyzer = self.runner.fetcher.analyzers()[0]
         self.assertIsNotNone(re.search('.*cppcheck.*', analyzer))
         self.assertIsNone(re.search('.*pylint.*', analyzer))
 
-    def test_analysis_an_incoming_monitor_project(self):
+    def test_analysis_an_incoming_monitor_package(self):
         self.db = MagicMock()
         self.db.filter_by_name = MagicMock(return_value={})
         self.monitor = kiskadee.monitor.Monitor(self.db, self.queues)
-        self.monitor.send_project_to_runner(self.project)
-        incoming_project = self.runner.queues.dequeue_analysis()
-        self.assertEqual(self.project, incoming_project)
+        self.monitor.send_package_to_runner(self.package)
+        incoming_package = self.runner.queues.dequeue_analysis()
+        self.assertEqual(self.package, incoming_package)
 
 
 if __name__ == '__main__':

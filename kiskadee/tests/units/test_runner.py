@@ -13,6 +13,6 @@ class RunnerTestCase(unittest.TestCase):
     def test_path_to_uncompressed_source(self):
 
         self.runner.fetcher = kiskadee.fetchers.example.Fetcher()
-        self.runner.project = {'name': 'test'}
-        uncompressed_source_path = self.runner.get_project_code_path()
+        self.runner.package = {'name': 'test'}
+        uncompressed_source_path = self.runner.get_package_code_path()
         self.assertIsNotNone(uncompressed_source_path)

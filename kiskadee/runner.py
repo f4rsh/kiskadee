@@ -1,4 +1,4 @@
-"""Run each static analyzer in each project marked for analysis."""
+"""Run each static analyzer in each package marked for analysis."""
 
 import shutil
 import tempfile
@@ -20,39 +20,39 @@ class Runner:
         """Return a non initialized Runner."""
         self.queues = queues
         self.fetcher = None
-        self.project = None
+        self.package = None
 
     def run(self):
         """Run static analyzers.
 
-        Continuously dequeue projects from `analyses_queue` and call the
-        :func:`analyze` method, passing the dequeued project as argument.
+        Continuously dequeue packages from `analyses_queue` and call the
+        :func:`analyze` method, passing the dequeued package as argument.
         After the analysis, send the result back to Monitor.
         """
         kiskadee.logger.debug('RUNNER PID: {}'.format(os.getpid()))
         while RUNNING:
             kiskadee.logger.debug('RUNNER STATE: Idle.')
-            self.project = self.queues.dequeue_analysis()
+            self.package = self.queues.dequeue_analysis()
             self.call_analyzers()
 
-    def import_project_fetcher(self):
+    def import_package_fetcher(self):
         try:
             return importlib.import_module(
-                    self.project['fetcher']
+                    self.package['fetcher']
                     ).Fetcher()
         except ModuleNotFoundError:
             kiskadee.logger.debug("RUNNER STATE: Fetcher {}\
-                    could not be loaded".format(self.project['fetcher'])
+                    could not be loaded".format(self.package['fetcher'])
                 )
             return {}
 
     def run_analysis(self, analyzers, source_path):
-        self.project['results'] = {}
+        self.package['results'] = {}
         for analyzer in analyzers:
             firehose_report = self.analyze(analyzer, source_path)
             if firehose_report:
-                self.project['results'][analyzer] = firehose_report
-        return self.project
+                self.package['results'][analyzer] = firehose_report
+        return self.package
 
 
     def rmdtemp(self, temp_dir):
@@ -67,8 +67,8 @@ class Runner:
         the function :func:`analyze`, passing the source dict, the analyzer
         to run the analysis, and the path to a compressed source.
         """
-        self.fetcher = self.import_project_fetcher()
-        source_path = self.get_project_code_path()
+        self.fetcher = self.import_package_fetcher()
+        source_path = self.get_package_code_path()
         if not source_path:
             return None
 
@@ -89,7 +89,7 @@ class Runner:
         The `analyzer` is the name of a static analyzer already created on the
         database.
         The `source_path` is the directory to a uncompressed source, returned
-        by the :func:`get_project_code_path`.
+        by the :func:`get_package_code_path`.
         """
         if source_path is None:
             return None
@@ -111,15 +111,15 @@ class Runner:
             kiskadee.logger.debug(err)
             return None
 
-    def get_project_code_path(self):
+    def get_package_code_path(self):
         """ Returns a string, representing the path of the uncompressed
-        project source."""
-        if not (self.fetcher and self.project):
+        package source."""
+        if not (self.fetcher and self.package):
             return None
 
-        compressed_source_path = self.fetcher.get_sources(self.project)
+        compressed_source_path = self.fetcher.get_sources(self.package)
         if compressed_source_path :
-            uncompressed_source_path = self.uncompress_project_code(
+            uncompressed_source_path = self.uncompress_package_code(
                     compressed_source_path
                     )
             self.rmdtemp(os.path.dirname(compressed_source_path))
@@ -128,7 +128,7 @@ class Runner:
             kiskadee.logger.debug('RUNNER: invalid compressed source')
             return None
 
-    def uncompress_project_code(self, compressed_source):
+    def uncompress_package_code(self, compressed_source):
         dir_to_unpack_source = tempfile.mkdtemp()
         try:
             shutil.unpack_archive(compressed_source,
@@ -136,7 +136,7 @@ class Runner:
             return dir_to_unpack_source
         except Exception as err:
             kiskadee.logger.debug('RUNNER STATE: Could not unpack'\
-                    'project source')
+                    'package source')
             kiskadee.logger.debug(err)
             return {}
 

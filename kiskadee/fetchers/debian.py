@@ -1,4 +1,4 @@
-"""Fetcher to monitor Debian Packages."""
+"""Fetcher to monitor Debian package Packages."""
 
 import os
 import tempfile
@@ -23,7 +23,7 @@ class Fetcher(kiskadee.fetchers.Fetcher):
 
         Each package monitored by the fetcher will be
         queued by calling the watch parent method,
-        passing it as argument.
+        passing the package data as argument.
         """
         kiskadee.logger.debug("Starting Debian fetcher")
         while RUNNING:
