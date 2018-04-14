@@ -2,6 +2,16 @@
 
 ## [Unreleased]
 
+## [0.4.4] - 2018-04-08
+### Added
+- New test suites (unit, integration, functionals, api, plugins)
+- initializer module, responsible for execute as processes runner and monitor.
+### Changed
+- Refactoring models, Runner and Monitor.
+- All code that interacts with database was moved to the model.py module.
+### Removed
+- Useless tests.
+
 ## [0.4.3] - 2018-03-07
 ### Fixed
 - Configuration file system path.
