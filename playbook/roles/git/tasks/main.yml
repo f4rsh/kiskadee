@@ -1,3 +1,7 @@
+- name: Turn off selinux
+  command: setenforce 0
+  ignore_errors: yes
+
 - name: Install kiskadee
   command: pip3 install -e .
   args:
@@ -20,6 +24,7 @@
     chdir: /home/vagrant/kiskadee
     target: analyzers
 
-- name: Turn off selinux
-  command: setenforce 0
-  ignore_errors: yes
+- name: migrate database
+  command: alembic upgrade head
+  args:
+    chdir: /home/vagrant/kiskadee

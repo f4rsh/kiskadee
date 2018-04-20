@@ -2,12 +2,15 @@ kiskadee development
 ====================
 
 This section is a guide for new developers willing to set up a development
-environemnt to start contributing to kiskadee development. If you have any
+environment to start contributing to kiskadee. If you have any
 doubt, please contact us on IRC in #kiskadee at freenode or join the
 development discussion in our mailing list at kiskadee@googlegroups.com.
 
-**kiskadee development only suports python versions >= 3. Assume such versions
+**kiskadee development only supports python versions >= 3. Assume such versions
 for all commands run along this documentation.**
+
+**This documentation covers step by step how install kiskadee. If you want to
+quickly configure an development environment, check the installing documentation.**
 
 Installing dependencies
 -----------------------
@@ -16,7 +19,7 @@ The name of the dependencies are compatible with the Fedora distribution. If
 you use another OS, you will have to find the compatible names
 for the dependencies.
 
-`dnf` is Fedora package manager. One should make proper subtitutions when using
+`dnf` is Fedora package manager. One should make proper substitutions when using
 another linux distribution.
 
 The `redhat-rpm-config` package, is a specific Fedora dependency, if you do not
@@ -177,7 +180,7 @@ For short, the most used commands are:
 
   $ alembic revision -m "migration description"
 
-**To autogenerate a new migration**
+**To auto generate a new migration**
 
 .. code-block:: bash
 
@@ -209,7 +212,7 @@ Environment variables
 
 Kiskadee database migration tool(alembic) get its database configuration
 from a environment variable named DATABASE_TYPE.
-If this variable is not defined, then it will assume its running on a developemnt
+If this variable is not defined, then it will assume its running on a development
 environment, but for others environments such as test, homologation or
 production be sure to set which one are being used.
 
