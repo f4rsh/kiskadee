@@ -77,9 +77,11 @@ class Monitor:
             return {}
         package = self.db.filter_by_name(Package, data['name'])
         if not package:
-            Package.save(self.db, data)
+            new_package = Package.save(self.db, data)
+            self.save_package_analysis(data, new_package)
         else:
-            Package.update(self.db, package, data)
+            updated_package = Package.update(self.db, package, data)
+            self.save_package_analysis(data, updated_package)
 
     def save_package_analysis(self, data, package):
         for analyzer, result in data['results'].items():

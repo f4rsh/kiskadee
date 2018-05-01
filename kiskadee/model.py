@@ -158,7 +158,7 @@ class Analysis(Base):
             Report.save(db, dict_analysis, _analyzer.name, name)
             kiskadee.logger.debug(
                     "MONITOR: Saved analysis done by {} for package: {}-{}"
-                    .format(analyzer, data["name"], data["version"])
+                    .format(analyzer, package.name, version)
                 )
             return
         except Exception as err:
@@ -200,7 +200,7 @@ class Report(Base):
             db.session.commit()
             kiskadee.logger.debug(
                     "MONITOR: Saved analysis reports for {} package"
-                    .format(data["name"])
+                    .format(package_name)
                 )
         except KeyError as key:
             kiskadee.logger.debug(
@@ -211,7 +211,7 @@ class Report(Base):
         except Exception as err:
             kiskadee.logger.debug(
                     "MONITOR: Failed to get analysis reports to {} package"
-                    .format(data["name"])
+                    .format(package_name)
                 )
             kiskadee.logger.debug(err)
         return
