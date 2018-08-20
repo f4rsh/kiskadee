@@ -36,7 +36,7 @@ kiskadee have a CI environment hosted at this
 ## Ranking experiments
 
 Data and information on ranking experiments for kiskadee's ranking module are
-available [here](https://www.ime.usp.br/~athoscr/files/ranking_data.tgz).
+available [here](https://gitlab.com/ccsl-usp/kiskadee-ranking-data).
 
 ## Communication
 
