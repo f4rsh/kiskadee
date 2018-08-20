@@ -11,6 +11,10 @@ For more information on the project, installation or development
 environment setup, refer to the full [kiskadee
 documentation](https://docs.pagure.org/kiskadee).
 
+There is an academic paper describing our work torwards ranking static analysis
+warnings, available
+[here](https://link.springer.com/chapter/10.1007/978-3-319-92375-8_8).
+
 To build the documentation locally:
 
 	pip install -U sphinx sphinx\_rtd\_theme
